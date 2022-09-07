@@ -25,6 +25,8 @@ class _CategoriesState extends ConsumerState<Categories> {
             bottom: 10,
             right: 10,
             child: FloatingActionButton(
+              heroTag: UniqueKey(),
+              key: UniqueKey(),
               backgroundColor: startGradientColor,
               child: const Icon(
                 Icons.add,
@@ -36,8 +38,7 @@ class _CategoriesState extends ConsumerState<Categories> {
                     await ref
                         .read(repositoryProvider)
                         .addCategory(Category(name: name));
-                    setState(() {
-                    });
+                    setState(() {});
                   }
                 });
               },
@@ -59,10 +60,8 @@ class _CategoriesState extends ConsumerState<Categories> {
   }
 
   Widget getCategories() {
-    final repository = ref.watch(repositoryProvider);
-
     return FutureBuilder<List<Category>>(
-      future: repository.readAllCategories(),
+      future: getCategoryData(),
       builder: (context, AsyncSnapshot<List<Category>> snapshot) {
         final categories = snapshot.data ?? <Category>[];
         return ListView.builder(
@@ -73,6 +72,24 @@ class _CategoriesState extends ConsumerState<Categories> {
         );
       },
     );
+  }
+
+  Future<List<Category>> getCategoryData() async {
+    final repository = ref.watch(repositoryProvider);
+    final result = await repository.readAllCategories();
+    result.when(
+        success: (data) {
+          return data;
+        },
+        failure: (Exception error) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error.toString())));
+        },
+        errorMessage: (int code, String? message) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(message ?? 'Problems getting data')));
+        });
+    return <Category>[];
   }
 
   Widget buildCategoryRow(Category category) {

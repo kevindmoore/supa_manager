@@ -1,8 +1,7 @@
-import 'package:example/data/repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/tasks.dart';
+import '../../data/tasks_notifier.dart';
 import '../tasks/task_card.dart';
 
 class Done extends ConsumerStatefulWidget {
@@ -13,6 +12,7 @@ class Done extends ConsumerStatefulWidget {
 }
 
 class _DoneState extends ConsumerState<Done> {
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -22,32 +22,29 @@ class _DoneState extends ConsumerState<Done> {
   }
 
   Widget getTasks() {
-    final repository = ref.watch(repositoryProvider);
-
-    return FutureBuilder<List<Task>>(
-      future: repository.getDoneTasks(),
-      builder: (context, AsyncSnapshot<List<Task>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          final tasks = snapshot.data!;
-          return ListView.builder(
-            itemCount: tasks.length,
-            itemBuilder: (BuildContext context, int index) {
-              return TaskCard(
-                key: ValueKey(tasks[index].id),
-                task: tasks[index],
-                onChanged: () {
-                  // setState(
-                  //       () {
-                  //   },
-                  // );
-                },
-              );
-            },
-          );
-        } else {
-          return Container();
-        }
+    final tasks = ref.watch(taskNotifierProvider);
+    final taskNotifier = ref.read(taskNotifierProvider.notifier);
+    final doneTasks = taskNotifier.filterDoneTasks(tasks);
+    return ListView.builder(
+      itemCount: doneTasks.length,
+      itemBuilder: (BuildContext context, int index) {
+        return TaskCard(
+          key: ValueKey(doneTasks[index].id),
+          task: doneTasks[index],
+          onChanged: (task) {
+            setState(
+              () {
+                taskNotifier.replaceTask(task);
+              },
+            );
+          },
+          onDeleted: (task) {
+            setState(() {});
+            taskNotifier.removeTask(task);
+          },
+        );
       },
     );
   }
+
 }

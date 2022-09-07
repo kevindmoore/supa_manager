@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/tasks.dart';
 import '../../data/repository.dart';
+import '../../data/tasks_notifier.dart';
 import '../dialog/new_item.dart';
 import '../utils.dart';
 import 'task_card.dart';
@@ -16,6 +17,13 @@ class Tasks extends ConsumerStatefulWidget {
 
 class _TasksState extends ConsumerState<Tasks> {
   final GlobalKey<AnimatedListState> _listKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(taskNotifierProvider.notifier).initialize();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -27,6 +35,8 @@ class _TasksState extends ConsumerState<Tasks> {
             bottom: 10,
             right: 10,
             child: FloatingActionButton(
+              heroTag: UniqueKey(),
+              key: UniqueKey(),
               backgroundColor: startGradientColor,
               child: const Icon(
                 Icons.add,
@@ -35,9 +45,12 @@ class _TasksState extends ConsumerState<Tasks> {
               onPressed: () {
                 showNewDialog('New Task', (String? name) async {
                   if (name != null) {
-                    await addTask(name);
-                    // setState(() {
-                    // });
+                    final task = await addTask(name);
+                    if (task != null) {
+                      setState(() {
+                        ref.read(taskNotifierProvider.notifier).addTask(task);
+                      });
+                    }
                   }
                 });
               },
@@ -48,11 +61,18 @@ class _TasksState extends ConsumerState<Tasks> {
     );
   }
 
-  Future addTask(String name) async {
+  Future<Task?> addTask(String name) async {
     final repository = ref.read(repositoryProvider);
-    await repository.addTask(Task(name: name));
+    final result =
+        await repository.addTask(Task(name: name, done: false, doLater: false));
+    return result.when(
+        success: (task) {
+          ref.read(taskNotifierProvider.notifier).addTask(task);
+          return task;
+        },
+        failure: (_) => null,
+        errorMessage: (c, m) => null);
   }
-
 
   void showNewDialog(String title, NameCallBack callBack) {
     showDialog(
@@ -65,29 +85,27 @@ class _TasksState extends ConsumerState<Tasks> {
   }
 
   Widget getTasks() {
-    final repository = ref.watch(repositoryProvider);
-
-    return FutureBuilder<List<Task>>(
-      future: repository.getTodaysTasks(),
-      builder: (context, AsyncSnapshot<List<Task>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          final tasks = snapshot.data!;
-          return AnimatedList(
-            key: _listKey,
-            initialItemCount: tasks.length,
-            itemBuilder: (BuildContext context, int index, animation) {
-              return TaskCard(
-                key: ValueKey(tasks[index].id),
-                task: tasks[index],
-                onChanged: () {
-                  // setState(() {});
-                },
-              );
-            },
-          );
-        } else {
-          return Container();
-        }
+    // log('getTasks: _currentTasks.length = ${_currentTasks.length}');
+    final tasks = ref.watch(taskNotifierProvider);
+    final taskNotifier = ref.read(taskNotifierProvider.notifier);
+    final todaysTasks = taskNotifier.filterTodayTasks(tasks);
+    return ListView.builder(
+      key: _listKey,
+      itemCount: todaysTasks.length,
+      itemBuilder: (BuildContext context, int index) {
+        return TaskCard(
+          key: ValueKey(todaysTasks[index].id),
+          task: todaysTasks[index],
+          onChanged: (task) {
+            setState(() {
+              taskNotifier.replaceTask(task);
+            });
+          },
+          onDeleted: (task) {
+            setState(() {});
+            taskNotifier.removeTask(task);
+          },
+        );
       },
     );
   }

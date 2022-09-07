@@ -1,7 +1,7 @@
 name: supa_manager
-description: A Package for managing a supabase database
-version: 1.0.0
-homepage:
+description: A Package for accessing a supabase database for Flutter
+version: 1.0.0-dev.1
+homepage: https://github.com/kevindmoore/supa_manager
 
 environment:
   sdk: ">=2.17.6 <3.0.0"
@@ -22,3 +22,5 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^2.0.1
   freezed: ^2.1.0+1
+  build_runner: ^2.1.10
+  json_serializable: ^6.2.0

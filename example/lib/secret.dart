@@ -2,8 +2,6 @@ import 'dart:async' show Future;
 import 'dart:convert' show json;
 import 'package:flutter/services.dart' show rootBundle;
 
-late Secrets globalSecrets;
-
 class Secrets {
   final String url;
   final String apiKey;

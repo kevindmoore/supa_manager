@@ -32,7 +32,7 @@ class MyRouter {
         path: '/login',
         pageBuilder: (context, state) => MaterialPage<void>(
           key: state.pageKey,
-          child: const Login(),
+          child: const LoginDialog(),
         ),
       ),
       GoRoute(

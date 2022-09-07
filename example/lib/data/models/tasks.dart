@@ -21,10 +21,8 @@ class Task with _$Task {
     int? id,
     @JsonKey(includeIfNull: false)
     String? userId,
-    @JsonKey(includeIfNull: false)
-    bool? done,
-    @JsonKey(includeIfNull: false)
-    bool? doLater,
+    @Default(false) bool done,
+    @Default(false) bool doLater,
     @JsonKey(includeIfNull: false)
     int? categoryId,
   }) = _Task;

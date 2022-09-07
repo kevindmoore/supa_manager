@@ -70,9 +70,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         },
       ),
       appBar: getAppBar(title),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: pageList,
+      body: Padding(
+        padding: const EdgeInsets.only(bottom: 2.0),
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: pageList,
+        ),
       ),
     );
   }

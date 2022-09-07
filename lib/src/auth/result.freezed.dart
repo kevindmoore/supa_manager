@@ -19,21 +19,21 @@ mixin _$Result<T> {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(T data) success,
-    required TResult Function(Error error) failure,
+    required TResult Function(Exception error) failure,
     required TResult Function(int code, String? message) errorMessage,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult Function(T data)? success,
-    TResult Function(Error error)? failure,
+    TResult Function(Exception error)? failure,
     TResult Function(int code, String? message)? errorMessage,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(T data)? success,
-    TResult Function(Error error)? failure,
+    TResult Function(Exception error)? failure,
     TResult Function(int code, String? message)? errorMessage,
     required TResult orElse(),
   }) =>
@@ -142,7 +142,7 @@ class _$_Success<T> implements _Success<T> {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(T data) success,
-    required TResult Function(Error error) failure,
+    required TResult Function(Exception error) failure,
     required TResult Function(int code, String? message) errorMessage,
   }) {
     return success(data);
@@ -152,7 +152,7 @@ class _$_Success<T> implements _Success<T> {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult Function(T data)? success,
-    TResult Function(Error error)? failure,
+    TResult Function(Exception error)? failure,
     TResult Function(int code, String? message)? errorMessage,
   }) {
     return success?.call(data);
@@ -162,7 +162,7 @@ class _$_Success<T> implements _Success<T> {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(T data)? success,
-    TResult Function(Error error)? failure,
+    TResult Function(Exception error)? failure,
     TResult Function(int code, String? message)? errorMessage,
     required TResult orElse(),
   }) {
@@ -221,7 +221,7 @@ abstract class _$$_FailureCopyWith<T, $Res> {
   factory _$$_FailureCopyWith(
           _$_Failure<T> value, $Res Function(_$_Failure<T>) then) =
       __$$_FailureCopyWithImpl<T, $Res>;
-  $Res call({Error error});
+  $Res call({Exception error});
 }
 
 /// @nodoc
@@ -242,7 +242,7 @@ class __$$_FailureCopyWithImpl<T, $Res> extends _$ResultCopyWithImpl<T, $Res>
       error == freezed
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
-              as Error,
+              as Exception,
     ));
   }
 }
@@ -253,7 +253,7 @@ class _$_Failure<T> implements _Failure<T> {
   const _$_Failure(this.error);
 
   @override
-  final Error error;
+  final Exception error;
 
   @override
   String toString() {
@@ -281,7 +281,7 @@ class _$_Failure<T> implements _Failure<T> {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(T data) success,
-    required TResult Function(Error error) failure,
+    required TResult Function(Exception error) failure,
     required TResult Function(int code, String? message) errorMessage,
   }) {
     return failure(error);
@@ -291,7 +291,7 @@ class _$_Failure<T> implements _Failure<T> {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult Function(T data)? success,
-    TResult Function(Error error)? failure,
+    TResult Function(Exception error)? failure,
     TResult Function(int code, String? message)? errorMessage,
   }) {
     return failure?.call(error);
@@ -301,7 +301,7 @@ class _$_Failure<T> implements _Failure<T> {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(T data)? success,
-    TResult Function(Error error)? failure,
+    TResult Function(Exception error)? failure,
     TResult Function(int code, String? message)? errorMessage,
     required TResult orElse(),
   }) {
@@ -347,9 +347,9 @@ class _$_Failure<T> implements _Failure<T> {
 }
 
 abstract class _Failure<T> implements Result<T> {
-  const factory _Failure(final Error error) = _$_Failure<T>;
+  const factory _Failure(final Exception error) = _$_Failure<T>;
 
-  Error get error;
+  Exception get error;
   @JsonKey(ignore: true)
   _$$_FailureCopyWith<T, _$_Failure<T>> get copyWith =>
       throw _privateConstructorUsedError;
@@ -431,7 +431,7 @@ class _$_ErrorMessage<T> implements _ErrorMessage<T> {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function(T data) success,
-    required TResult Function(Error error) failure,
+    required TResult Function(Exception error) failure,
     required TResult Function(int code, String? message) errorMessage,
   }) {
     return errorMessage(code, message);
@@ -441,7 +441,7 @@ class _$_ErrorMessage<T> implements _ErrorMessage<T> {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult Function(T data)? success,
-    TResult Function(Error error)? failure,
+    TResult Function(Exception error)? failure,
     TResult Function(int code, String? message)? errorMessage,
   }) {
     return errorMessage?.call(code, message);
@@ -451,7 +451,7 @@ class _$_ErrorMessage<T> implements _ErrorMessage<T> {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(T data)? success,
-    TResult Function(Error error)? failure,
+    TResult Function(Exception error)? failure,
     TResult Function(int code, String? message)? errorMessage,
     required TResult orElse(),
   }) {

@@ -118,7 +118,7 @@ class SupaAuthManager {
     prefs.setBool(loggedInKey, loggedIn);
   }
 
-  Future<bool> createUser(String email, String password) async {
+  Future<Result<bool>> createUser(String email, String password) async {
     try {
       final response = await client.auth.signUp(email, password);
       if (response.session != null) {
@@ -127,13 +127,13 @@ class SupaAuthManager {
         loginStateNotifier.update(true, user);
         saveUserData(user, true);
         registerAuthListener();
-        return true;
+        return const Result.success(true);
       }
-    } catch (e) {
-      // ref.read(otherBlocProvider).add(OtherEvent.showErrorMessageEvent(e.toString()));
-      logError(e);
+    } on Exception catch (error) {
+      logError(error);
+      return Result.failure(error);
     }
-    return false;
+    return const Result.success(false);
   }
 
   Future<Result<DatabaseUser>> login(String email, String password) async {

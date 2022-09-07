@@ -10,8 +10,8 @@ _$_Task _$$_TaskFromJson(Map<String, dynamic> json) => _$_Task(
       name: json['name'] as String,
       id: json['id'] as int?,
       userId: json['userId'] as String?,
-      done: json['done'] as bool?,
-      doLater: json['doLater'] as bool?,
+      done: json['done'] as bool? ?? false,
+      doLater: json['doLater'] as bool? ?? false,
       categoryId: json['categoryId'] as int?,
     );
 
@@ -28,8 +28,8 @@ Map<String, dynamic> _$$_TaskToJson(_$_Task instance) {
 
   writeNotNull('id', instance.id);
   writeNotNull('userId', instance.userId);
-  writeNotNull('done', instance.done);
-  writeNotNull('doLater', instance.doLater);
+  val['done'] = instance.done;
+  val['doLater'] = instance.doLater;
   writeNotNull('categoryId', instance.categoryId);
   return val;
 }

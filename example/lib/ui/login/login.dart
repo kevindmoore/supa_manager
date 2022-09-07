@@ -6,14 +6,14 @@ import '../utils.dart';
 
 typedef VisibilityButtonPressed = void Function(bool);
 
-class Login extends ConsumerStatefulWidget {
-  const Login({Key? key}) : super(key: key);
+class LoginDialog extends ConsumerStatefulWidget {
+  const LoginDialog({Key? key}) : super(key: key);
 
   @override
   ConsumerState createState() => _LoginDialogState();
 }
 
-class _LoginDialogState extends ConsumerState<Login> {
+class _LoginDialogState extends ConsumerState<LoginDialog> {
   late TextEditingController emailTextController;
   late TextEditingController repeatPasswordTextController;
   late TextEditingController passwordTextController;
@@ -126,10 +126,9 @@ class _LoginDialogState extends ConsumerState<Login> {
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
+                    foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(
                         horizontal: 32.0, vertical: 20.0),
                     elevation: 0,
-                    onPrimary: Colors.white,
                   ),
                   onPressed: () async {
                     if (emailTextController.text.isNotEmpty &&

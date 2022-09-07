@@ -16,6 +16,7 @@ class Repository extends ChangeNotifier {
   final ChangeNotifierProviderRef ref;
   late SupaDatabaseManager databaseRepository;
 
+
   TableData<Task> taskTableData = TaskTableData();
   TableData<Category> categoryTableData = CategoryTableData();
 
@@ -23,63 +24,65 @@ class Repository extends ChangeNotifier {
     databaseRepository = getSupaDatabaseManager(ref);
   }
 
-  Future<Task?> addTask(Task task) async {
-    final result = await databaseRepository.addEntry(taskTableData, TaskTableEntry(task));
+  Future<Result<Task?>> addTask(Task task) async {
+    final result =
+        await databaseRepository.addEntry(taskTableData, TaskTableEntry(task));
     notifyListeners();
     return result;
   }
 
-  Future<Category?> addCategory(Category category) async {
+  Future<Result<Category?>> addCategory(Category category) async {
     final result = await databaseRepository.addEntry(
         categoryTableData, CategoryTableEntry(category));
     notifyListeners();
     return result;
   }
 
-  Future<Category?> deleteCategory(Category category) async {
+  Future<Result<Category?>> deleteCategory(Category category) async {
     final result = await databaseRepository.deleteTableEntry(
         categoryTableData, CategoryTableEntry(category));
     notifyListeners();
     return result;
   }
 
-  Future<Task?> deleteTask(Task task) async {
+  Future<Result<Task?>> deleteTask(Task task) async {
     final result = await databaseRepository.deleteTableEntry(
         taskTableData, TaskTableEntry(task));
     notifyListeners();
     return result;
   }
 
-  Future<List<Task>> getTasks() async {
+  Future<Result<List<Task>>> getTasks() async {
     return databaseRepository.readEntries(taskTableData);
   }
 
-  Future<List<Task>> getTodaysTasks() async {
-    return databaseRepository.selectEntriesWhere(taskTableData, [SelectEntry.and('done', 'false'),
-      SelectEntry.and('doLater', 'false')]);
+  Future<Result<List<Task>>> getTodaysTasks() async {
+    return databaseRepository.selectEntriesWhere(taskTableData, [
+      SelectEntry.and('done', 'false'),
+      SelectEntry.and('doLater', 'false')
+    ]);
   }
 
-  Future<List<Task>> getDoneTasks() async {
-    return databaseRepository.selectEntriesWhere(taskTableData, [SelectEntry.and('done', 'true'),
-      SelectEntry.and('doLater', 'false')]);
+  Future<Result<List<Task>>> getDoneTasks() async {
+    return databaseRepository.selectEntriesWhere(taskTableData,
+        [SelectEntry.and('done', 'true'), SelectEntry.and('doLater', 'false')]);
   }
 
-  Future<List<Task>> getDoLaterTasks() async {
-    return databaseRepository.selectEntriesWhere(taskTableData, [SelectEntry.and('done', 'false'),
-      SelectEntry.and('doLater', 'true')]);
+  Future<Result<List<Task>>> getDoLaterTasks() async {
+    return databaseRepository.selectEntriesWhere(taskTableData,
+        [SelectEntry.and('done', 'false'), SelectEntry.and('doLater', 'true')]);
   }
 
-  Future<List<Category>> readAllCategories() async {
+  Future<Result<List<Category>>> readAllCategories() async {
     return databaseRepository.readEntries(categoryTableData);
   }
 
-  Future<Task?> updateTask(Task task) async {
+  Future<Result<Task?>> updateTask(Task task) async {
     final result = await databaseRepository.updateTableEntry(
         taskTableData, TaskTableEntry(task));
     notifyListeners();
     return result;
   }
-
 }
 
 /// Table Entry classes

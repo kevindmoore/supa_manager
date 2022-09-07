@@ -1,19 +1,20 @@
-
 import 'package:example/data/repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/tasks.dart';
 import '../utils.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-typedef OnChanged = void Function();
+typedef OnChanged = void Function(Task);
+typedef OnDeleted = void Function(Task);
 
 // ignore: must_be_immutable
 class TaskCard extends ConsumerStatefulWidget {
   Task task;
   final OnChanged? onChanged;
+  final OnDeleted? onDeleted;
 
-  TaskCard({Key? key, required this.task, this.onChanged}) : super(key: key);
+  TaskCard({Key? key, required this.task, this.onChanged, this.onDeleted, }) : super(key: key);
 
   @override
   ConsumerState createState() => _TaskCardState();
@@ -53,13 +54,13 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     Checkbox(
                       value: widget.task.done,
                       onChanged: (changed) async {
-                        // setState(
-                        //       () {
+                        setState(
+                          () {
                             widget.task = widget.task.copyWith(
                                 done: !(true == widget.task.done),
                                 doLater: false);
-                          // },
-                        // );
+                          },
+                        );
                         updateTask(widget.task, repository);
                       },
                     ),
@@ -70,13 +71,13 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     Checkbox(
                       value: widget.task.doLater,
                       onChanged: (changed) async {
-                        // setState(
-                        //       () {
+                        setState(
+                          () {
                             widget.task = widget.task.copyWith(
                                 doLater: !(true == widget.task.doLater),
                                 done: false);
-                        //   },
-                        // );
+                          },
+                        );
                         updateTask(widget.task, repository);
                       },
                     ),
@@ -92,6 +93,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             IconButton(
                 onPressed: () async {
                   await repository.deleteTask(widget.task);
+                  widget.onDeleted?.call(widget.task);
                 },
                 icon: const Icon(
                   Icons.delete,
@@ -103,9 +105,18 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     );
   }
 
-  void updateTask(Task task,
-      Repository repository) async {
-    await repository.updateTask(widget.task);
-    widget.onChanged?.call();
+  void updateTask(Task task, Repository repository) async {
+    final result = await repository.updateTask(task);
+    result.when(
+        success: (updatedTask) => widget.task = updatedTask,
+        failure: (Exception error) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error.toString())));
+        },
+        errorMessage: (int code, String? message) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message ?? 'Problems Updating Task')));
+        });
+    widget.onChanged?.call(task);
   }
 }

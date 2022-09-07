@@ -25,10 +25,8 @@ mixin _$Task {
   int? get id => throw _privateConstructorUsedError;
   @JsonKey(includeIfNull: false)
   String? get userId => throw _privateConstructorUsedError;
-  @JsonKey(includeIfNull: false)
-  bool? get done => throw _privateConstructorUsedError;
-  @JsonKey(includeIfNull: false)
-  bool? get doLater => throw _privateConstructorUsedError;
+  bool get done => throw _privateConstructorUsedError;
+  bool get doLater => throw _privateConstructorUsedError;
   @JsonKey(includeIfNull: false)
   int? get categoryId => throw _privateConstructorUsedError;
 
@@ -45,8 +43,8 @@ abstract class $TaskCopyWith<$Res> {
       {String name,
       @JsonKey(includeIfNull: false) int? id,
       @JsonKey(includeIfNull: false) String? userId,
-      @JsonKey(includeIfNull: false) bool? done,
-      @JsonKey(includeIfNull: false) bool? doLater,
+      bool done,
+      bool doLater,
       @JsonKey(includeIfNull: false) int? categoryId});
 }
 
@@ -83,11 +81,11 @@ class _$TaskCopyWithImpl<$Res> implements $TaskCopyWith<$Res> {
       done: done == freezed
           ? _value.done
           : done // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
       doLater: doLater == freezed
           ? _value.doLater
           : doLater // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
       categoryId: categoryId == freezed
           ? _value.categoryId
           : categoryId // ignore: cast_nullable_to_non_nullable
@@ -105,8 +103,8 @@ abstract class _$$_TaskCopyWith<$Res> implements $TaskCopyWith<$Res> {
       {String name,
       @JsonKey(includeIfNull: false) int? id,
       @JsonKey(includeIfNull: false) String? userId,
-      @JsonKey(includeIfNull: false) bool? done,
-      @JsonKey(includeIfNull: false) bool? doLater,
+      bool done,
+      bool doLater,
       @JsonKey(includeIfNull: false) int? categoryId});
 }
 
@@ -144,11 +142,11 @@ class __$$_TaskCopyWithImpl<$Res> extends _$TaskCopyWithImpl<$Res>
       done: done == freezed
           ? _value.done
           : done // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
       doLater: doLater == freezed
           ? _value.doLater
           : doLater // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
       categoryId: categoryId == freezed
           ? _value.categoryId
           : categoryId // ignore: cast_nullable_to_non_nullable
@@ -165,8 +163,8 @@ class _$_Task implements _Task {
       {required this.name,
       @JsonKey(includeIfNull: false) this.id,
       @JsonKey(includeIfNull: false) this.userId,
-      @JsonKey(includeIfNull: false) this.done,
-      @JsonKey(includeIfNull: false) this.doLater,
+      this.done = false,
+      this.doLater = false,
       @JsonKey(includeIfNull: false) this.categoryId});
 
   factory _$_Task.fromJson(Map<String, dynamic> json) => _$$_TaskFromJson(json);
@@ -180,11 +178,11 @@ class _$_Task implements _Task {
   @JsonKey(includeIfNull: false)
   final String? userId;
   @override
-  @JsonKey(includeIfNull: false)
-  final bool? done;
+  @JsonKey()
+  final bool done;
   @override
-  @JsonKey(includeIfNull: false)
-  final bool? doLater;
+  @JsonKey()
+  final bool doLater;
   @override
   @JsonKey(includeIfNull: false)
   final int? categoryId;
@@ -237,8 +235,8 @@ abstract class _Task implements Task {
       {required final String name,
       @JsonKey(includeIfNull: false) final int? id,
       @JsonKey(includeIfNull: false) final String? userId,
-      @JsonKey(includeIfNull: false) final bool? done,
-      @JsonKey(includeIfNull: false) final bool? doLater,
+      final bool done,
+      final bool doLater,
       @JsonKey(includeIfNull: false) final int? categoryId}) = _$_Task;
 
   factory _Task.fromJson(Map<String, dynamic> json) = _$_Task.fromJson;
@@ -252,11 +250,9 @@ abstract class _Task implements Task {
   @JsonKey(includeIfNull: false)
   String? get userId;
   @override
-  @JsonKey(includeIfNull: false)
-  bool? get done;
+  bool get done;
   @override
-  @JsonKey(includeIfNull: false)
-  bool? get doLater;
+  bool get doLater;
   @override
   @JsonKey(includeIfNull: false)
   int? get categoryId;
