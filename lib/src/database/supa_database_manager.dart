@@ -1,6 +1,7 @@
 import 'package:lumberdash/lumberdash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../supa_manager.dart';
+import 'select_entry.dart';
 
 const userIdFieldName = 'userId';
 const idFieldName = 'id';
@@ -29,8 +30,22 @@ class SupaDatabaseManager {
     }
   }
 
-  Future<Result<List<dynamic>>> addDataToTable(
+  Future<Result<List<dynamic>>> addListDataToTable(
       String tableName, List<Map<String, dynamic>> tableData) async {
+    try {
+      final data = await client.from(tableName).insert(tableData).select();
+      return Result.success(data);
+    } on Exception catch (error) {
+      logFatal('Error adding data $error');
+      if (await _handlePostgrestError(error)) {
+        return addListDataToTable(tableName, tableData);
+      }
+      return Result.failure(error);
+    }
+  }
+
+  Future<Result<dynamic>> addDataToTable(
+      String tableName, Map<String, dynamic> tableData) async {
     try {
       final data = await client.from(tableName).insert(tableData).select();
       return Result.success(data);
@@ -156,13 +171,39 @@ class SupaDatabaseManager {
 
   Future<Result<T?>> addEntry<T>(
       TableData<T> tableData, TableEntry<T> tableEntry) async {
+    tableEntry.addUserId(client.auth.currentUser!.id);
     final result = await addDataToTable(
-        tableData.tableName, tableEntry.addUserId(client.auth.currentUser!.id));
+        tableData.tableName, tableEntry.toJson());
     return result.when(success: (data) {
       if (data != null && data.isNotEmpty) {
         return Result.success(tableData.fromJson(data[0]));
       }
       return const Result.success(null);
+    }, failure: (error) {
+      return Result.failure(error);
+    }, errorMessage: (code, message) {
+      return Result.errorMessage(code, message);
+    });
+  }
+
+  Future<Result<List<T>>> addEntries<T>(
+      TableData<T> tableData, List<TableEntry<T>> tableEntries) async {
+    final jsonEntries = <Map<String, dynamic>>[];
+    for (final entry in tableEntries) {
+      entry.addUserId(client.auth.currentUser!.id);
+      jsonEntries.add(entry.toJson());
+    }
+    final result = await addListDataToTable(
+        tableData.tableName, jsonEntries);
+    return result.when(success: (data) {
+      final addedEntries = <T>[];
+      if (data != null && data.isNotEmpty) {
+        for (final entry in data) {
+          addedEntries.add(tableData.fromJson(entry));
+        }
+        return Result.success(addedEntries);
+      }
+      return Result.success(addedEntries);
     }, failure: (error) {
       return Result.failure(error);
     }, errorMessage: (code, message) {

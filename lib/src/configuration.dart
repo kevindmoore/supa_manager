@@ -1,3 +1,4 @@
+import 'package:lumberdash/lumberdash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supa_manager/supa_manager.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,12 +26,16 @@ class Configuration {
 
   Future initialize(String url,
       String apiKey, String apiSecret) async {
-    supabaseInstance = await Supabase.initialize(
-      url: url,
-      anonKey: apiKey,
-      authCallbackUrlHostname: '$url/auth/va/callback',
-      debug: true,
-    );
+    try {
+      supabaseInstance = await Supabase.initialize(
+        url: url,
+        anonKey: apiKey,
+        authCallbackUrlHostname: '$url/auth/va/callback',
+        debug: true,
+      );
+    } on Exception catch (error) {
+      logError(error);
+    }
     globalSharedPreferences = await SharedPreferences.getInstance();
     supaAuthManager = SupaAuthManager(
         client: supabaseInstance.client,

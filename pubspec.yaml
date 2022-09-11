@@ -13,7 +13,7 @@ dependencies:
   shared_preferences: ^2.0.15
   lumberdash: ^3.0.0
   colorize_lumberdash: ^3.0.0
-  supabase_flutter: ^1.0.0-dev.4
+  supabase_flutter: ^1.0.0-dev.6
   gotrue: ^1.0.0-dev.3
   freezed_annotation: ^2.0.3
 

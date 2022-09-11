@@ -100,14 +100,15 @@ class TaskTableData extends TableData<Task> {
   }
 }
 
-class TaskTableEntry extends TableEntry<Task> {
+class TaskTableEntry with TableEntry<Task> {
   final Task task;
 
   TaskTableEntry(this.task);
 
+
   @override
-  List<Map<String, dynamic>> addUserId(String userId) {
-    return taskToDatabaseJson(task, userId);
+  Task addUserId(String userId) {
+    return task.copyWith(userId: userId);
   }
 
   @override
@@ -133,14 +134,14 @@ class CategoryTableData extends TableData<Category> {
   }
 }
 
-class CategoryTableEntry extends TableEntry<Category> {
+class CategoryTableEntry with TableEntry<Category> {
   final Category category;
 
   CategoryTableEntry(this.category);
 
   @override
-  List<Map<String, dynamic>> addUserId(String userId) {
-    return categoryToDatabaseJson(category, userId);
+  Category addUserId(String userId) {
+    return category.copyWith(userId: userId);
   }
 
   @override

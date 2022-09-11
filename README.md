@@ -4,7 +4,7 @@ for performing CRUD operations (Create, Read, Update and Delete).
 
 ## Features
 
-* Provide authentication for loging in and creating a new user.
+* Provide authentication for logging in and creating a new user.
 * Provide generic methods to perform CRUD operations.
 
 ## Getting started
@@ -27,5 +27,6 @@ This package allows you to handle all the CRUD operations you need:
 
 ## Additional information
 
+See the example to see a complete example of using the package.
 For more information on **Supabase**, go to https://supabase.com
 For a video tutorial, see https://www.raywenderlich.com/33619647-supabase-with-flutter

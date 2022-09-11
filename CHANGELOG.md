@@ -4,3 +4,7 @@
 
 ## 1.0.0-dev.2
 * Use Result class in all returns. Use StreamProvider in example
+
+## 1.0.0-dev.3
+* Add addEntries method. Add a few mixins 
+* Change addUserId method
