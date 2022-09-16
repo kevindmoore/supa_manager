@@ -1,6 +1,8 @@
 abstract class TableData<T> {
   late String tableName;
 
+  bool hasUserId = true;
+
   T fromJson(Map<String, dynamic> json);
 }
 

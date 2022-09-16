@@ -8,3 +8,6 @@
 ## 1.0.0-dev.3
 * Add addEntries method. Add a few mixins 
 * Change addUserId method
+
+## 1.0.0-dev.4
+* Allow table to not have user id

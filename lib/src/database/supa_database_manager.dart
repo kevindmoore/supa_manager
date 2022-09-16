@@ -60,12 +60,14 @@ class SupaDatabaseManager {
 
   Future<Result<T?>> readEntry<T>(TableData<T> tableData, int id) async {
     try {
-      final data = await client
+      var select = client
           .from(tableData.tableName)
           .select()
-          .eq(userIdFieldName, client.auth.currentUser!.id)
-          .eq(idFieldName, id)
-          .single();
+          .eq(idFieldName, id);
+      if (tableData.hasUserId) {
+        select = select.eq(userIdFieldName, client.auth.currentUser!.id);
+      }
+      final data = await select.single();
       if (data != null && data.isNotEmpty) {
         return Result.success(tableData.fromJson(data));
       }
@@ -100,11 +102,14 @@ class SupaDatabaseManager {
       TableData<T> tableData, String columnName, int id) async {
     final entries = <T>[];
     try {
-      final data = await client
+      var select = client
           .from(tableData.tableName)
           .select()
-          .eq(userIdFieldName, client.auth.currentUser!.id)
           .eq(columnName, id);
+      if (tableData.hasUserId) {
+        select = select.eq(userIdFieldName, client.auth.currentUser!.id);
+      }
+      final data = await select;
       if (data != null && data is List<dynamic> && data.isNotEmpty) {
         await Future.forEach(data, (json) async {
           final entry = tableData.fromJson(json as Map<String, dynamic>);
@@ -127,8 +132,10 @@ class SupaDatabaseManager {
     try {
       var select = client
           .from(tableData.tableName)
-          .select()
-          .eq(userIdFieldName, client.auth.currentUser!.id);
+          .select();
+      if (tableData.hasUserId) {
+        select = select.eq(userIdFieldName, client.auth.currentUser!.id);
+      }
       var orString = '';
       var orCount = 0;
       var totalOrs = 0;
