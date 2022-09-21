@@ -107,8 +107,8 @@ class TaskTableEntry with TableEntry<Task> {
 
 
   @override
-  Task addUserId(String userId) {
-    return task.copyWith(userId: userId);
+  TaskTableEntry addUserId(String userId) {
+    return TaskTableEntry(task.copyWith(userId: userId));
   }
 
   @override
@@ -140,8 +140,8 @@ class CategoryTableEntry with TableEntry<Category> {
   CategoryTableEntry(this.category);
 
   @override
-  Category addUserId(String userId) {
-    return category.copyWith(userId: userId);
+  CategoryTableEntry addUserId(String userId) {
+    return CategoryTableEntry(category.copyWith(userId: userId));
   }
 
   @override

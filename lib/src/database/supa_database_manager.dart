@@ -178,9 +178,9 @@ class SupaDatabaseManager {
 
   Future<Result<T?>> addEntry<T>(
       TableData<T> tableData, TableEntry<T> tableEntry) async {
-    tableEntry.addUserId(client.auth.currentUser!.id);
+    final updatedEntry = tableEntry.addUserId(client.auth.currentUser!.id);
     final result = await addDataToTable(
-        tableData.tableName, tableEntry.toJson());
+        tableData.tableName, updatedEntry.toJson());
     return result.when(success: (data) {
       if (data != null && data.isNotEmpty) {
         return Result.success(tableData.fromJson(data[0]));
@@ -197,8 +197,8 @@ class SupaDatabaseManager {
       TableData<T> tableData, List<TableEntry<T>> tableEntries) async {
     final jsonEntries = <Map<String, dynamic>>[];
     for (final entry in tableEntries) {
-      entry.addUserId(client.auth.currentUser!.id);
-      jsonEntries.add(entry.toJson());
+      final updatedEntry = entry.addUserId(client.auth.currentUser!.id);
+      jsonEntries.add(updatedEntry.toJson());
     }
     final result = await addListDataToTable(
         tableData.tableName, jsonEntries);

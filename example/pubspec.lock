@@ -699,7 +699,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.0-dev.2"
+    version: "1.0.0-dev.4"
   supabase:
     dependency: transitive
     description:

@@ -24,7 +24,8 @@ void main() async {
 
 ```
 
-After you make sure that Flutter has be initialized, load the url, api key, and api secret. Create a Configuration class and call initialize.
+SecretLoader is a simple class used to load the supabase url, key & secret. Since these are sensitive values, this file
+is not checked into source control. Create a Configuration class and initialize with the url, api key, and api secret.
 This will create the supabase instance as well as the SupaAuthManager and SupaDatabaseManager.
 
 This example also uses **go_router** for page handling.
@@ -69,14 +70,14 @@ class TaskTableData extends TableData<Task> {
   }
 }
 
-class TaskTableEntry extends TableEntry<Task> {
+class TaskTableEntry with TableEntry<Task> {
   final Task task;
 
   TaskTableEntry(this.task);
 
   @override
-  List<Map<String, dynamic>> addUserId(String userId) {
-    return taskToDatabaseJson(task, userId);
+  TaskTableEntry addUserId(String userId) {
+    return TaskTableEntry(task.copyWith(userId: userId));
   }
 
   @override

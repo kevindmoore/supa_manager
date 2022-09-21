@@ -11,7 +11,7 @@ mixin TableEntry<T> {
 
   Map<String, dynamic> toJson();
 
-  T addUserId(String userId);
+  TableEntry<T> addUserId(String userId);
 }
 
 mixin HasId {

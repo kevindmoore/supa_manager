@@ -11,3 +11,6 @@
 
 ## 1.0.0-dev.4
 * Allow table to not have user id
+
+## 1.0.0-dev.5
+* Fix adding entry
