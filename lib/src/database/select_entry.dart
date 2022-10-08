@@ -1,7 +1,16 @@
+/// Two different seleciton types: And and Or
 enum SelectType {
   and,
   or
 }
+
+/// Describe a selection
+///
+/// [columnName] The name of the column
+///
+/// [value] The value of the column
+///
+/// [type] The type of the column
 class SelectEntry {
   final String columnName;
   final String value;

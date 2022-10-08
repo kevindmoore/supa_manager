@@ -302,7 +302,7 @@ packages:
       name: gotrue
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.0-dev.3"
+    version: "1.0.0-dev.4"
   graphs:
     dependency: transitive
     description:
@@ -519,7 +519,7 @@ packages:
       name: postgrest
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.0-dev.3"
+    version: "1.0.0-dev.4"
   process:
     dependency: transitive
     description:
@@ -547,7 +547,7 @@ packages:
       name: realtime_client
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.0-dev.2"
+    version: "1.0.0-dev.5"
   riverpod:
     dependency: transitive
     description:
@@ -699,21 +699,21 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.0-dev.4"
+    version: "1.0.0-dev.6"
   supabase:
     dependency: transitive
     description:
       name: supabase
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.0-dev.5"
+    version: "1.0.0-dev.9"
   supabase_flutter:
     dependency: transitive
     description:
       name: supabase_flutter
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.0-dev.6"
+    version: "1.0.0-dev.9"
   term_glyph:
     dependency: transitive
     description:

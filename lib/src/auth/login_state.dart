@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'database_user.dart';
 
-
+/// Notifies listeners of changes in the login state
 class LoginStateNotifier extends ChangeNotifier {
   var state = LoginState(loggedIn: false, user: null);
 
@@ -25,6 +25,11 @@ class LoginStateNotifier extends ChangeNotifier {
   }
 }
 
+/// Contains information on whether the user logged in and their user information
+///
+/// [loggedIn] Logged in state
+///
+/// [user] User information
 class LoginState {
   final bool loggedIn;
   final DatabaseUser? user;

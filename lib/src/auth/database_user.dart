@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'database_user.freezed.dart';
 part 'database_user.g.dart';
 
+/// Holds information about the currently logged in user
 @freezed
 class DatabaseUser with _$DatabaseUser {
   @JsonSerializable(explicitToJson: true)
@@ -19,6 +20,7 @@ class DatabaseUser with _$DatabaseUser {
 
 }
 
+/// Class that uses the builder pattern to create new instances with added info
 class DatabaseUserBuilder {
   String? _sessionId;
   String? _email;

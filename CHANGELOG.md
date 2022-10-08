@@ -14,3 +14,9 @@
 
 ## 1.0.0-dev.5
 * Fix adding entry
+
+## 1.0.0-dev.6
+* Add buildSelect method to allow user to add their own select statements
+* Add docs
+
+

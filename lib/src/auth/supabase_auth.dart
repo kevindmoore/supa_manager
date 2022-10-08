@@ -13,6 +13,11 @@ const String loggedInKey = 'LoggedIn';
 const String userKey = 'user';
 const String sessionKey = 'sessionKey';
 
+/// Class for handling Supabase Authorization
+///
+/// [apiKey] and [apiSecret] are required to use this class
+/// [prefs] is needed for storing login informat
+/// [loginStateNotifier] is needed for notifying users of login state changes
 class SupaAuthManager {
   final String apiKey;
   final String apiSecret;
@@ -24,18 +29,18 @@ class SupaAuthManager {
   SupaAuthManager(
       {required this.client,
       required this.prefs,
-      // required this.ref,
       required this.apiKey,
       required this.apiSecret,
       required this.loginStateNotifier});
 
+  /// When an app starts, call this to load any already logged in user
   Future loadUser() async {
     if (client.auth.currentUser != null) {
       loginStateNotifier.loggedIn(true);
       logMessage('Logged in');
       return;
     }
-    final recovered = await recoverSession();
+    final recovered = await _recoverSession();
     if (!recovered) {
       final user = _getUser();
       if (user != null &&
@@ -50,10 +55,12 @@ class SupaAuthManager {
     }
   }
 
+  /// Are we logged in?
   bool isLoggedIn() {
     return prefs.getBool(loggedInKey) ?? false;
   }
 
+  /// Get the stored user information
   DatabaseUser? _getUser() {
     final userString = prefs.getString(userKey);
     if (userString != null) {
@@ -64,11 +71,13 @@ class SupaAuthManager {
     return null;
   }
 
-  String? getUserName() {
+  /// Get the stored user email
+  String? getUserEmail() {
     final user = _getUser();
     return user?.email;
   }
 
+  /// Get the current logged in user
   DatabaseUser? getUserFromAuth() {
     final user = client.auth.currentUser;
     if (user == null) {
@@ -77,7 +86,7 @@ class SupaAuthManager {
     return DatabaseUser(email: user.email!, userId: user.id);
   }
 
-  void authChanged(AuthChangeEvent event, Session? session) {
+  void _authChanged(AuthChangeEvent event, Session? session) {
     logMessage('authChanged: event: $event session: $session');
     switch (event) {
       case AuthChangeEvent.passwordRecovery:
@@ -86,7 +95,7 @@ class SupaAuthManager {
       case AuthChangeEvent.signedIn:
         loginStateNotifier.loggedIn(true);
         if (session != null) {
-          saveUserSession(session);
+          _saveUserSession(session);
         }
         break;
       case AuthChangeEvent.signedOut:
@@ -94,12 +103,12 @@ class SupaAuthManager {
         break;
       case AuthChangeEvent.tokenRefreshed:
         if (session != null) {
-          saveUserSession(session);
+          _saveUserSession(session);
         }
         break;
       case AuthChangeEvent.userUpdated:
         if (session != null) {
-          saveUserSession(session);
+          _saveUserSession(session);
         }
         break;
       case AuthChangeEvent.userDeleted:
@@ -108,7 +117,7 @@ class SupaAuthManager {
     }
   }
 
-  void saveUserData(DatabaseUser? user, bool loggedIn) {
+  void _saveUserData(DatabaseUser? user, bool loggedIn) {
     if (user != null) {
       prefs.setString(userKey, jsonEncode(user));
     } else {
@@ -118,15 +127,20 @@ class SupaAuthManager {
     prefs.setBool(loggedInKey, loggedIn);
   }
 
+  /// Create a new user
+  ///
+  /// [email] email to use
+  /// [password] password to use
+  ///
   Future<Result<bool>> createUser(String email, String password) async {
     try {
       final response = await client.auth.signUp(email, password);
       if (response.session != null) {
-        saveUserSession(response.session!);
+        _saveUserSession(response.session!);
         final user = DatabaseUser(email: email, password: password);
         loginStateNotifier.update(true, user);
-        saveUserData(user, true);
-        registerAuthListener();
+        _saveUserData(user, true);
+        _registerAuthListener();
         return const Result.success(true);
       }
     } on Exception catch (error) {
@@ -136,6 +150,10 @@ class SupaAuthManager {
     return const Result.success(false);
   }
 
+  /// Login an existing user
+  ///
+  /// [email] email to use
+  /// [password] password to use
   Future<Result<DatabaseUser>> login(String email, String password) async {
     try {
       final response =
@@ -146,9 +164,9 @@ class SupaAuthManager {
             email: email, password: password, userId: response.user?.id);
         logMessage('login: user = $user');
         loginStateNotifier.update(true, user);
-        saveUserSession(response.session!);
-        saveUserData(user, true);
-        registerAuthListener();
+        _saveUserSession(response.session!);
+        _saveUserData(user, true);
+        _registerAuthListener();
         return Result.success(user);
       }
     } catch (e) {
@@ -159,12 +177,13 @@ class SupaAuthManager {
     return const Result.errorMessage(99, 'Problems logging in');
   }
 
-  void registerAuthListener() {
+  void _registerAuthListener() {
     client.auth.onAuthStateChange((event, session) {
-      authChanged(event, session);
+      _authChanged(event, session);
     });
   }
 
+  /// Logout the current user
   void logout() async {
     _logoutState();
     try {
@@ -180,15 +199,15 @@ class SupaAuthManager {
     loginStateNotifier.update(false, null);
   }
 
-  void saveUserSession(Session session) async {
+  void _saveUserSession(Session session) async {
     await prefs.setString(sessionKey, session.persistSessionString);
   }
 
-  void clearUserSession() async {
+  void _clearUserSession() async {
     await prefs.remove(sessionKey);
   }
 
-  Future<bool> recoverSession() async {
+  Future<bool> _recoverSession() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.containsKey(sessionKey)) {
       logMessage(
@@ -204,8 +223,8 @@ class SupaAuthManager {
         final user = builder.build();
         logMessage('login: user = $user');
         loginStateNotifier.update(true, user);
-        saveUserSession(session.session!);
-        saveUserData(user, true);
+        _saveUserSession(session.session!);
+        _saveUserData(user, true);
         return true;
       } catch (error) {
         logError('Problems recovering session $error');
@@ -214,10 +233,11 @@ class SupaAuthManager {
     return false;
   }
 
+  /// Refresh the current session
   Future<bool> refreshSession() async {
     try {
       final response = await client.auth.refreshSession();
-      logMessage('$response');
+      logMessage('refreshSession: $response');
       return true;
     } catch (e) {
       logFatal('Problems refreshing session: $e');
@@ -225,6 +245,9 @@ class SupaAuthManager {
     return false;
   }
 
+  /// Reset the password for the given email
+  ///
+  /// [email] email to reset
   void resetPassword(String email) async {
     logMessage('Sending email to $email');
     try {

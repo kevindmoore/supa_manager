@@ -7,16 +7,27 @@ const userIdFieldName = 'userId';
 const idFieldName = 'id';
 const tokenExpired = 'JWT expired';
 
+typedef SelectBuilder = PostgrestFilterBuilder Function(
+    PostgrestFilterBuilder builder);
+
+/// Class for managing Supabase databases
+///
+/// Depends on [TableData] for describing a table and
+/// [TableEntry] for handling the data itself
 class SupaDatabaseManager {
   late SupabaseClient client;
   final SupaAuthManager authManager;
   Stream<List<Map<String, dynamic>>>? projectStream;
   Stream<List<Map<String, dynamic>>>? taskStream;
 
+  /// Initialize with AuthManager. Get an instance of the client
   SupaDatabaseManager(this.authManager) {
     client = Supabase.instance.client;
   }
 
+  /// Generic method to get all of the values from a table
+  ///
+  /// [tableName] name of table
   Future<Result<List<dynamic>>> _listTable(String tableName) async {
     try {
       final data = await client.from(tableName).select();
@@ -30,6 +41,10 @@ class SupaDatabaseManager {
     }
   }
 
+  /// Given a table name and a list of json data, perform an insert
+  ///
+  /// [tableName] name of table
+  /// [tableData] list of mapped data
   Future<Result<List<dynamic>>> addListDataToTable(
       String tableName, List<Map<String, dynamic>> tableData) async {
     try {
@@ -44,26 +59,32 @@ class SupaDatabaseManager {
     }
   }
 
+  /// Given a table name and json data, perform an insert
+  ///
+  /// The name of the table is [tableName]
+  /// [tableData] list of mapped data
   Future<Result<dynamic>> addDataToTable(
-      String tableName, Map<String, dynamic> tableData) async {
+      String tableName, Map<String, dynamic> tableMap) async {
     try {
-      final data = await client.from(tableName).insert(tableData).select();
+      final data = await client.from(tableName).insert(tableMap).select();
       return Result.success(data);
     } on Exception catch (error) {
       logFatal('Error adding data $error');
       if (await _handlePostgrestError(error)) {
-        return addDataToTable(tableName, tableData);
+        return addDataToTable(tableName, tableMap);
       }
       return Result.failure(error);
     }
   }
 
+  /// Read a single entry with the given table data and id
+  ///
+  /// [tableData] contains table info
+  /// [id] id of given entry
   Future<Result<T?>> readEntry<T>(TableData<T> tableData, int id) async {
     try {
-      var select = client
-          .from(tableData.tableName)
-          .select()
-          .eq(idFieldName, id);
+      var select =
+          client.from(tableData.tableName).select().eq(idFieldName, id);
       if (tableData.hasUserId) {
         select = select.eq(userIdFieldName, client.auth.currentUser!.id);
       }
@@ -81,6 +102,9 @@ class SupaDatabaseManager {
     }
   }
 
+  /// Return a list of entries for the given table
+  ///
+  /// [tableData] contains table info
   Future<Result<List<T>>> readEntries<T>(TableData<T> tableData) async {
     final entries = <T>[];
     final result = await _listTable(tableData.tableName);
@@ -98,14 +122,16 @@ class SupaDatabaseManager {
     });
   }
 
+  /// Return a list of entries for the given table that matches a single column
+  ///
+  /// [tableData] contains table info
+  /// [columnName] column name
+  /// [columnValue] value of column to match
   Future<Result<List<T>>> readEntriesWhere<T>(
-      TableData<T> tableData, String columnName, int id) async {
+      TableData<T> tableData, String columnName, int columnValue) async {
     final entries = <T>[];
     try {
-      var select = client
-          .from(tableData.tableName)
-          .select()
-          .eq(columnName, id);
+      var select = client.from(tableData.tableName).select().eq(columnName, columnValue);
       if (tableData.hasUserId) {
         select = select.eq(userIdFieldName, client.auth.currentUser!.id);
       }
@@ -120,42 +146,61 @@ class SupaDatabaseManager {
     } on Exception catch (error) {
       logFatal('readEntriesWhere: Error  $error');
       if (await _handlePostgrestError(error)) {
-        return readEntriesWhere(tableData, columnName, id);
+        return readEntriesWhere(tableData, columnName, columnValue);
       }
       return Result.failure(error);
     }
   }
 
+  /// Return a list of entries for the given table. Pass in a builder
+  /// to add your own selection statements
+  ///
+  /// [tableData] contains table info
+  /// [builder] function for adding additional selection statements
+  Future<Result<List<T>>> buildSelect<T>(
+      TableData<T> tableData, SelectBuilder builder) async {
+    final entries = <T>[];
+    try {
+      var select = client.from(tableData.tableName).select();
+      if (tableData.hasUserId) {
+        select = select.eq(userIdFieldName, client.auth.currentUser!.id);
+      }
+      select = builder.call(select);
+      final data = await select;
+      if (data != null && data is List<dynamic> && data.isNotEmpty) {
+        await Future.forEach(data, (json) async {
+          final entry = tableData.fromJson(json as Map<String, dynamic>);
+          entries.add(entry);
+        });
+      }
+      return Result.success(entries);
+    } on Exception catch (error) {
+      logFatal('buildSelect: Error  $error');
+      if (await _handlePostgrestError(error)) {
+        return buildSelect(tableData, builder);
+      }
+      return Result.failure(error);
+    }
+  }
+
+  /// Return a list of entries for the given table that matches a list of selection entries
+  ///
+  /// [tableData] contains table info
+  /// [selections] list of [SelectEntry] items
   Future<Result<List<T>>> selectEntriesWhere<T>(
       TableData<T> tableData, List<SelectEntry> selections) async {
     final entries = <T>[];
     try {
-      var select = client
-          .from(tableData.tableName)
-          .select();
+      var select = client.from(tableData.tableName).select();
       if (tableData.hasUserId) {
         select = select.eq(userIdFieldName, client.auth.currentUser!.id);
       }
-      var orString = '';
-      var orCount = 0;
-      var totalOrs = 0;
-      for (final element in selections) {
-        if (element.type == SelectType.or) totalOrs++;
-      }
       for (final selection in selections) {
-        switch (selection.type) {
-          case SelectType.and:
+        if (selection.type == SelectType.and) {
             select = select.eq(selection.columnName, selection.value);
-            break;
-          case SelectType.or:
-            orString += '${selection.columnName}.eq.${selection.value}';
-            if (orCount + 1 < totalOrs) {
-              orString += ',';
-            }
-            orCount++;
-            break;
         }
       }
+      final orString = buildOrString(selections);
       if (orString.isNotEmpty) {
         select = select.or(orString);
       }
@@ -168,7 +213,7 @@ class SupaDatabaseManager {
       }
       return Result.success(entries);
     } on Exception catch (error) {
-      logFatal('readEntriesWhere: Error  $error');
+      logFatal('selectEntriesWhere: Error  $error');
       if (await _handlePostgrestError(error)) {
         return selectEntriesWhere(tableData, selections);
       }
@@ -176,23 +221,55 @@ class SupaDatabaseManager {
     }
   }
 
+  /// Helper function to build an or string for selections
+  ///
+  /// [selections] list of [SelectEntry] items
+  String buildOrString(List<SelectEntry> selections) {
+    var orString = '';
+    var orCount = 0;
+    var totalOrs = 0;
+    for (final element in selections) {
+      if (element.type == SelectType.or) totalOrs++;
+    }
+    for (final selection in selections) {
+      if (selection.type == SelectType.or) {
+        orString += '${selection.columnName}.eq.${selection.value}';
+        if (orCount + 1 < totalOrs) {
+          orString += ',';
+        }
+        orCount++;
+      }
+    }
+    return orString;
+  }
+
+  /// Add a single entry for the given table.
+  ///
+  /// [tableData] Describe Table
+  /// [tableEntry] contains table entry
   Future<Result<T?>> addEntry<T>(
       TableData<T> tableData, TableEntry<T> tableEntry) async {
     final updatedEntry = tableEntry.addUserId(client.auth.currentUser!.id);
-    final result = await addDataToTable(
-        tableData.tableName, updatedEntry.toJson());
+    final result =
+        await addDataToTable(tableData.tableName, updatedEntry.toJson());
     return result.when(success: (data) {
       if (data != null && data.isNotEmpty) {
         return Result.success(tableData.fromJson(data[0]));
       }
       return const Result.success(null);
     }, failure: (error) {
+      logFatal('addEntry: Error  $error');
       return Result.failure(error);
     }, errorMessage: (code, message) {
+      logFatal('addEntry: Error  $message');
       return Result.errorMessage(code, message);
     });
   }
 
+  /// For the given table, add a list of entries
+  ///
+  /// [tableData] Describe Table
+  /// [tableEntries] list of table entries
   Future<Result<List<T>>> addEntries<T>(
       TableData<T> tableData, List<TableEntry<T>> tableEntries) async {
     final jsonEntries = <Map<String, dynamic>>[];
@@ -200,8 +277,7 @@ class SupaDatabaseManager {
       final updatedEntry = entry.addUserId(client.auth.currentUser!.id);
       jsonEntries.add(updatedEntry.toJson());
     }
-    final result = await addListDataToTable(
-        tableData.tableName, jsonEntries);
+    final result = await addListDataToTable(tableData.tableName, jsonEntries);
     return result.when(success: (data) {
       final addedEntries = <T>[];
       if (data != null && data.isNotEmpty) {
@@ -212,12 +288,18 @@ class SupaDatabaseManager {
       }
       return Result.success(addedEntries);
     }, failure: (error) {
+      logFatal('addEntries: Error  $error');
       return Result.failure(error);
     }, errorMessage: (code, message) {
+      logFatal('addEntries: Error  $message');
       return Result.errorMessage(code, message);
     });
   }
 
+  /// Update a single table entry
+  ///
+  /// [tableData] Describe Table
+  /// [tableEntry] Describe data
   Future<Result<T?>> updateTableEntry<T>(
       TableData<T> tableData, TableEntry<T> tableEntry) async {
     if (tableEntry.id == null) {
@@ -243,6 +325,10 @@ class SupaDatabaseManager {
     }
   }
 
+  /// Delete a single table entry
+  ///
+  /// [tableData] Describe Table
+  /// [tableEntry] Describe data
   Future<Result<T?>> deleteTableEntry<T>(
       TableData<T> tableData, TableEntry<T> tableEntry) async {
     if (tableEntry.id == null) {
@@ -269,6 +355,8 @@ class SupaDatabaseManager {
     }
   }
 
+  /// Check to see if the token has expired. Refresh
+  /// [error] Exception. Could be PostgrestException
   Future<bool> _handlePostgrestError(Exception error) async {
     if (error is PostgrestException) {
       if (error.message.contains(tokenExpired)) {

@@ -13,9 +13,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// void main() async {
 ///   WidgetsFlutterBinding.ensureInitialized();
 ///   // Initialize Supabase Auth
-///   await initializeSupabase();
-///   runApp(const ProviderScope(child: MyApp()));
+///   final secrets = await SecretLoader(secretPath: 'assets/secrets.json').load();
+///   configuration = Configuration();
+///   await configuration.initialize(
+///     secrets.url, secrets.apiKey, secrets.apiSecret);
+///   runApp(child: const MyApp());
 /// }
+/// ```
 ///
 class Configuration {
   late Supabase supabaseInstance;
