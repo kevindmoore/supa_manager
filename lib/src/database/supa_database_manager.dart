@@ -1,7 +1,6 @@
 import 'package:lumberdash/lumberdash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../supa_manager.dart';
-import 'select_entry.dart';
 
 const userIdFieldName = 'userId';
 const idFieldName = 'id';

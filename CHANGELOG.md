@@ -19,4 +19,7 @@
 * Add buildSelect method to allow user to add their own select statements
 * Add docs
 
+## 1.0.0-dev.7
+* Update to 1.1.0 supabase library
+
 

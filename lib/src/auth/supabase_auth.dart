@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lumberdash/lumberdash.dart';
@@ -86,29 +85,29 @@ class SupaAuthManager {
     return DatabaseUser(email: user.email!, userId: user.id);
   }
 
-  void _authChanged(AuthChangeEvent event, Session? session) {
-    logMessage('authChanged: event: $event session: $session');
-    switch (event) {
+  void _authChanged(AuthState state) {
+    logMessage('authChanged: event: $state');
+    switch (state.event) {
       case AuthChangeEvent.passwordRecovery:
         // TODO: Handle this case.
         break;
       case AuthChangeEvent.signedIn:
         loginStateNotifier.loggedIn(true);
-        if (session != null) {
-          _saveUserSession(session);
+        if (state.session != null) {
+          _saveUserSession(state.session!);
         }
         break;
       case AuthChangeEvent.signedOut:
         _logoutState();
         break;
       case AuthChangeEvent.tokenRefreshed:
-        if (session != null) {
-          _saveUserSession(session);
+        if (state.session != null) {
+          _saveUserSession(state.session!);
         }
         break;
       case AuthChangeEvent.userUpdated:
-        if (session != null) {
-          _saveUserSession(session);
+        if (state.session != null) {
+          _saveUserSession(state.session!);
         }
         break;
       case AuthChangeEvent.userDeleted:
@@ -134,7 +133,7 @@ class SupaAuthManager {
   ///
   Future<Result<bool>> createUser(String email, String password) async {
     try {
-      final response = await client.auth.signUp(email, password);
+      final response = await client.auth.signUp(email: email, password: password);
       if (response.session != null) {
         _saveUserSession(response.session!);
         final user = DatabaseUser(email: email, password: password);
@@ -157,7 +156,7 @@ class SupaAuthManager {
   Future<Result<DatabaseUser>> login(String email, String password) async {
     try {
       final response =
-          await client.auth.signIn(email: email, password: password);
+          await client.auth.signInWithPassword(email: email, password: password);
       if (response.session != null) {
         logMessage('login: response.data = ${response.session}');
         final user = DatabaseUser(
@@ -178,8 +177,8 @@ class SupaAuthManager {
   }
 
   void _registerAuthListener() {
-    client.auth.onAuthStateChange((event, session) {
-      _authChanged(event, session);
+    client.auth.onAuthStateChange.listen((state) {
+      _authChanged(state);
     });
   }
 
@@ -251,11 +250,9 @@ class SupaAuthManager {
   void resetPassword(String email) async {
     logMessage('Sending email to $email');
     try {
-      await client.auth.api.resetPasswordForEmail(
+      await client.auth.resetPasswordForEmail(
         email,
-        options: const AuthOptions(
-            redirectTo:
-                kIsWeb ? null : 'io.supabase.flutter://reset-callback/'),
+        redirectTo: 'io.supabase.flutter://reset-callback/',
       );
     } catch (error) {
       logFatal('Problems resetting password: $error');
