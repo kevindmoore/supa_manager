@@ -1,3 +1,6 @@
+import 'dart:ffi';
+import 'dart:io';
+
 import 'package:lumberdash/lumberdash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../supa_manager.dart';
@@ -130,7 +133,8 @@ class SupaDatabaseManager {
       TableData<T> tableData, String columnName, int columnValue) async {
     final entries = <T>[];
     try {
-      var select = client.from(tableData.tableName).select().eq(columnName, columnValue);
+      var select =
+          client.from(tableData.tableName).select().eq(columnName, columnValue);
       if (tableData.hasUserId) {
         select = select.eq(userIdFieldName, client.auth.currentUser!.id);
       }
@@ -196,7 +200,7 @@ class SupaDatabaseManager {
       }
       for (final selection in selections) {
         if (selection.type == SelectType.and) {
-            select = select.eq(selection.columnName, selection.value);
+          select = select.eq(selection.columnName, selection.value);
         }
       }
       final orString = buildOrString(selections);
@@ -350,6 +354,58 @@ class SupaDatabaseManager {
       if (await _handlePostgrestError(error)) {
         return deleteTableEntry(tableData, tableEntry);
       }
+      return Result.failure(error);
+    }
+  }
+
+  Future<Result<String?>> uploadFile(
+      String bucket, String folderName, String fileName, File file) async {
+    try {
+      final path = await client.storage.from(bucket).upload(
+            '$folderName/$fileName',
+            file,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+          );
+      return Result.success(path);
+    } on Exception catch (error) {
+      logFatal('uploadFile: $error');
+      return Result.failure(error);
+    }
+  }
+
+  Future<Result<bool>> downloadFile(
+      String bucket, String folderName, String fileName, File file) async {
+    try {
+      final u8List = await client.storage.from(bucket).download(
+            '$folderName/$fileName',
+          );
+      file.writeAsBytesSync(u8List);
+      return const Result.success(true);
+    } on Exception catch (error) {
+      logFatal('downloadFile: $error');
+      return Result.failure(error);
+    }
+  }
+
+  Future<Result<List<FileObject>?>> deleteFile(
+      String bucket, String folderName, String fileName) async {
+    try {
+      final files = await client.storage.from(bucket).remove(
+            ['$folderName/$fileName'],
+          );
+      return Result.success(files);
+    } on Exception catch (error) {
+      logFatal('deleteFile: $error');
+      return Result.failure(error);
+    }
+  }
+
+  Future<Result<List<FileObject>?>> getBucketList(String bucket, String path) async {
+    try {
+      final files = await client.storage.from(bucket).list(path: path);
+      return Result.success(files);
+    } on Exception catch (error) {
+      logFatal('getBucketList: $error');
       return Result.failure(error);
     }
   }
