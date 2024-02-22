@@ -9,7 +9,7 @@ import '../utils.dart';
 import 'task_card.dart';
 
 class Tasks extends ConsumerStatefulWidget {
-  const Tasks({Key? key}) : super(key: key);
+  const Tasks({super.key});
 
   @override
   ConsumerState<Tasks> createState() => _TasksState();

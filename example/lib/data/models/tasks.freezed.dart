@@ -1,7 +1,7 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint
-// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'tasks.dart';
 
@@ -38,7 +38,8 @@ mixin _$Task {
 /// @nodoc
 abstract class $TaskCopyWith<$Res> {
   factory $TaskCopyWith(Task value, $Res Function(Task) then) =
-      _$TaskCopyWithImpl<$Res>;
+      _$TaskCopyWithImpl<$Res, Task>;
+  @useResult
   $Res call(
       {String name,
       @JsonKey(includeIfNull: false) int? id,
@@ -49,56 +50,61 @@ abstract class $TaskCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$TaskCopyWithImpl<$Res> implements $TaskCopyWith<$Res> {
+class _$TaskCopyWithImpl<$Res, $Val extends Task>
+    implements $TaskCopyWith<$Res> {
   _$TaskCopyWithImpl(this._value, this._then);
 
-  final Task _value;
   // ignore: unused_field
-  final $Res Function(Task) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? name = freezed,
+    Object? name = null,
     Object? id = freezed,
     Object? userId = freezed,
-    Object? done = freezed,
-    Object? doLater = freezed,
+    Object? done = null,
+    Object? doLater = null,
     Object? categoryId = freezed,
   }) {
     return _then(_value.copyWith(
-      name: name == freezed
+      name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      id: id == freezed
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int?,
-      userId: userId == freezed
+      userId: freezed == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String?,
-      done: done == freezed
+      done: null == done
           ? _value.done
           : done // ignore: cast_nullable_to_non_nullable
               as bool,
-      doLater: doLater == freezed
+      doLater: null == doLater
           ? _value.doLater
           : doLater // ignore: cast_nullable_to_non_nullable
               as bool,
-      categoryId: categoryId == freezed
+      categoryId: freezed == categoryId
           ? _value.categoryId
           : categoryId // ignore: cast_nullable_to_non_nullable
               as int?,
-    ));
+    ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$_TaskCopyWith<$Res> implements $TaskCopyWith<$Res> {
-  factory _$$_TaskCopyWith(_$_Task value, $Res Function(_$_Task) then) =
-      __$$_TaskCopyWithImpl<$Res>;
+abstract class _$$TaskImplCopyWith<$Res> implements $TaskCopyWith<$Res> {
+  factory _$$TaskImplCopyWith(
+          _$TaskImpl value, $Res Function(_$TaskImpl) then) =
+      __$$TaskImplCopyWithImpl<$Res>;
   @override
+  @useResult
   $Res call(
       {String name,
       @JsonKey(includeIfNull: false) int? id,
@@ -109,45 +115,44 @@ abstract class _$$_TaskCopyWith<$Res> implements $TaskCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$_TaskCopyWithImpl<$Res> extends _$TaskCopyWithImpl<$Res>
-    implements _$$_TaskCopyWith<$Res> {
-  __$$_TaskCopyWithImpl(_$_Task _value, $Res Function(_$_Task) _then)
-      : super(_value, (v) => _then(v as _$_Task));
+class __$$TaskImplCopyWithImpl<$Res>
+    extends _$TaskCopyWithImpl<$Res, _$TaskImpl>
+    implements _$$TaskImplCopyWith<$Res> {
+  __$$TaskImplCopyWithImpl(_$TaskImpl _value, $Res Function(_$TaskImpl) _then)
+      : super(_value, _then);
 
-  @override
-  _$_Task get _value => super._value as _$_Task;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? name = freezed,
+    Object? name = null,
     Object? id = freezed,
     Object? userId = freezed,
-    Object? done = freezed,
-    Object? doLater = freezed,
+    Object? done = null,
+    Object? doLater = null,
     Object? categoryId = freezed,
   }) {
-    return _then(_$_Task(
-      name: name == freezed
+    return _then(_$TaskImpl(
+      name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      id: id == freezed
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int?,
-      userId: userId == freezed
+      userId: freezed == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String?,
-      done: done == freezed
+      done: null == done
           ? _value.done
           : done // ignore: cast_nullable_to_non_nullable
               as bool,
-      doLater: doLater == freezed
+      doLater: null == doLater
           ? _value.doLater
           : doLater // ignore: cast_nullable_to_non_nullable
               as bool,
-      categoryId: categoryId == freezed
+      categoryId: freezed == categoryId
           ? _value.categoryId
           : categoryId // ignore: cast_nullable_to_non_nullable
               as int?,
@@ -158,8 +163,8 @@ class __$$_TaskCopyWithImpl<$Res> extends _$TaskCopyWithImpl<$Res>
 /// @nodoc
 
 @JsonSerializable(explicitToJson: true)
-class _$_Task implements _Task {
-  _$_Task(
+class _$TaskImpl implements _Task {
+  _$TaskImpl(
       {required this.name,
       @JsonKey(includeIfNull: false) this.id,
       @JsonKey(includeIfNull: false) this.userId,
@@ -167,7 +172,8 @@ class _$_Task implements _Task {
       this.doLater = false,
       @JsonKey(includeIfNull: false) this.categoryId});
 
-  factory _$_Task.fromJson(Map<String, dynamic> json) => _$$_TaskFromJson(json);
+  factory _$TaskImpl.fromJson(Map<String, dynamic> json) =>
+      _$$TaskImplFromJson(json);
 
   @override
   final String name;
@@ -196,35 +202,30 @@ class _$_Task implements _Task {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Task &&
-            const DeepCollectionEquality().equals(other.name, name) &&
-            const DeepCollectionEquality().equals(other.id, id) &&
-            const DeepCollectionEquality().equals(other.userId, userId) &&
-            const DeepCollectionEquality().equals(other.done, done) &&
-            const DeepCollectionEquality().equals(other.doLater, doLater) &&
-            const DeepCollectionEquality()
-                .equals(other.categoryId, categoryId));
+            other is _$TaskImpl &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.done, done) || other.done == done) &&
+            (identical(other.doLater, doLater) || other.doLater == doLater) &&
+            (identical(other.categoryId, categoryId) ||
+                other.categoryId == categoryId));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(name),
-      const DeepCollectionEquality().hash(id),
-      const DeepCollectionEquality().hash(userId),
-      const DeepCollectionEquality().hash(done),
-      const DeepCollectionEquality().hash(doLater),
-      const DeepCollectionEquality().hash(categoryId));
+  int get hashCode =>
+      Object.hash(runtimeType, name, id, userId, done, doLater, categoryId);
 
   @JsonKey(ignore: true)
   @override
-  _$$_TaskCopyWith<_$_Task> get copyWith =>
-      __$$_TaskCopyWithImpl<_$_Task>(this, _$identity);
+  @pragma('vm:prefer-inline')
+  _$$TaskImplCopyWith<_$TaskImpl> get copyWith =>
+      __$$TaskImplCopyWithImpl<_$TaskImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_TaskToJson(
+    return _$$TaskImplToJson(
       this,
     );
   }
@@ -237,9 +238,9 @@ abstract class _Task implements Task {
       @JsonKey(includeIfNull: false) final String? userId,
       final bool done,
       final bool doLater,
-      @JsonKey(includeIfNull: false) final int? categoryId}) = _$_Task;
+      @JsonKey(includeIfNull: false) final int? categoryId}) = _$TaskImpl;
 
-  factory _Task.fromJson(Map<String, dynamic> json) = _$_Task.fromJson;
+  factory _Task.fromJson(Map<String, dynamic> json) = _$TaskImpl.fromJson;
 
   @override
   String get name;
@@ -258,5 +259,6 @@ abstract class _Task implements Task {
   int? get categoryId;
   @override
   @JsonKey(ignore: true)
-  _$$_TaskCopyWith<_$_Task> get copyWith => throw _privateConstructorUsedError;
+  _$$TaskImplCopyWith<_$TaskImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

@@ -10,7 +10,9 @@ for performing CRUD operations (Create, Read, Update and Delete).
 ## Getting started
 
 Add the package:
+```shell
 flutter pub add supa_manager
+```
 
 ## Usage
 
@@ -29,4 +31,4 @@ This package allows you to handle all the CRUD operations you need:
 
 See the example to see a complete example of using the package.
 For more information on **Supabase**, go to https://supabase.com
-For a video tutorial, see https://www.raywenderlich.com/33619647-supabase-with-flutter
+For a video tutorial, see https://www.kodeco.com/33619647-supabase-with-flutter

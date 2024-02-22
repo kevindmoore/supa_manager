@@ -23,7 +23,7 @@ class SupaAuthManager {
 
   SupabaseClient client;
   final SharedPreferences prefs;
-  final LoginStateNotifier loginStateNotifier;
+  final LoginStateNotifier? loginStateNotifier;
 
   SupaAuthManager(
       {required this.client,
@@ -33,11 +33,12 @@ class SupaAuthManager {
       required this.loginStateNotifier});
 
   /// When an app starts, call this to load any already logged in user
-  Future loadUser() async {
+  Future<DatabaseUser?> loadUser() async {
     if (client.auth.currentUser != null) {
-      loginStateNotifier.loggedIn(true);
-      logMessage('Logged in');
-      return;
+      final user = _getUser();
+      loginStateNotifier?.update(true, user);
+      logMessage('loadUser: User exists, logged in');
+      return user;
     }
     final recovered = await _recoverSession();
     if (!recovered) {
@@ -45,17 +46,29 @@ class SupaAuthManager {
       if (user != null &&
           user.email.isNotEmpty &&
           true == user.password?.isNotEmpty) {
+        // Notifier is updated in this method
+        logMessage('loadUser: User exists in session, logging in');
         await login(user.email, user.password!);
-        logMessage('Logging in');
+        return user;
       } else {
-        logMessage('Not Logged in');
-        loginStateNotifier.loggedIn(false);
+        loginStateNotifier?.loggedIn(false);
+        return null;
       }
     }
+    loginStateNotifier?.update(false, null);
+    return null;
   }
 
   /// Are we logged in?
   bool isLoggedIn() {
+    if (client.auth.currentUser == null) {
+      _updateLogoutState();
+      return false;
+    }
+    if (client.auth.currentSession == null) {
+      _updateLogoutState();
+      return false;
+    }
     return prefs.getBool(loggedInKey) ?? false;
   }
 
@@ -63,10 +76,8 @@ class SupaAuthManager {
   DatabaseUser? _getUser() {
     final userString = prefs.getString(userKey);
     if (userString != null) {
-      logMessage('Found user string');
       return DatabaseUser.fromJson(jsonDecode(userString));
     }
-    logMessage('Did not find user string in prefs');
     return null;
   }
 
@@ -74,6 +85,12 @@ class SupaAuthManager {
   String? getUserEmail() {
     final user = _getUser();
     return user?.email;
+  }
+
+  /// Get the stored user password
+  String? getUserPassword() {
+    final user = _getUser();
+    return user?.password;
   }
 
   /// Get the current logged in user
@@ -86,13 +103,12 @@ class SupaAuthManager {
   }
 
   void _authChanged(AuthState state) {
-    logMessage('authChanged: event: $state');
     switch (state.event) {
       case AuthChangeEvent.passwordRecovery:
         // TODO: Handle this case.
         break;
       case AuthChangeEvent.signedIn:
-        loginStateNotifier.loggedIn(true);
+        loginStateNotifier?.loggedIn(true);
         if (state.session != null) {
           _saveUserSession(state.session!);
         }
@@ -113,6 +129,10 @@ class SupaAuthManager {
       case AuthChangeEvent.userDeleted:
         _logoutState();
         break;
+      case AuthChangeEvent.mfaChallengeVerified:
+        break;
+      case AuthChangeEvent.initialSession:
+        break;
     }
   }
 
@@ -122,7 +142,6 @@ class SupaAuthManager {
     } else {
       prefs.remove(userKey);
     }
-    logMessage('saveUserData: Logged In: $loggedIn user: $user');
     prefs.setBool(loggedInKey, loggedIn);
   }
 
@@ -133,11 +152,12 @@ class SupaAuthManager {
   ///
   Future<Result<bool>> createUser(String email, String password) async {
     try {
-      final response = await client.auth.signUp(email: email, password: password);
+      final response =
+          await client.auth.signUp(email: email, password: password);
       if (response.session != null) {
         _saveUserSession(response.session!);
         final user = DatabaseUser(email: email, password: password);
-        loginStateNotifier.update(true, user);
+        loginStateNotifier?.update(true, user);
         _saveUserData(user, true);
         _registerAuthListener();
         return const Result.success(true);
@@ -155,22 +175,22 @@ class SupaAuthManager {
   /// [password] password to use
   Future<Result<DatabaseUser>> login(String email, String password) async {
     try {
-      final response =
-          await client.auth.signInWithPassword(email: email, password: password);
+      final response = await client.auth
+          .signInWithPassword(email: email, password: password);
       if (response.session != null) {
-        logMessage('login: response.data = ${response.session}');
         final user = DatabaseUser(
             email: email, password: password, userId: response.user?.id);
-        logMessage('login: user = $user');
-        loginStateNotifier.update(true, user);
         _saveUserSession(response.session!);
         _saveUserData(user, true);
+        // This needs to be after saving state
+        loginStateNotifier?.update(true, user);
+        logMessage('login: User exists, logged in');
         _registerAuthListener();
         return Result.success(user);
       }
     } catch (e) {
       logError(e);
-      loginStateNotifier.loggedIn(false);
+      loginStateNotifier?.loggedIn(false);
       return Result.errorMessage(99, e.toString());
     }
     return const Result.errorMessage(99, 'Problems logging in');
@@ -192,36 +212,44 @@ class SupaAuthManager {
     }
   }
 
+  void _updateLogoutState() {
+    if (prefs.getBool(loggedInKey) ?? false) {
+      _logoutState();
+    }
+  }
+
   void _logoutState() {
     prefs.setBool(loggedInKey, false);
-    prefs.remove(sessionKey);
-    loginStateNotifier.update(false, null);
+    _clearUserSession();
+    loginStateNotifier?.update(false, null);
   }
 
   void _saveUserSession(Session session) async {
-    await prefs.setString(sessionKey, session.persistSessionString);
+    await prefs.setString(sessionKey, getPersistSessionString(session));
+    // await prefs.setString(sessionKey, session.persistSessionString);
+  }
+
+  String  getPersistSessionString(Session session) {
+    final data = {'currentSession': session.toJson(), 'expiresAt': session.expiresAt};
+    return json.encode(data);
   }
 
   void _clearUserSession() async {
     await prefs.remove(sessionKey);
+    prefs.remove(userKey);
   }
 
   Future<bool> _recoverSession() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.containsKey(sessionKey)) {
-      logMessage(
-          'Found persisted session string, attempting to recover session');
       try {
         final jsonStr = prefs.getString(sessionKey)!;
         final session = await client.auth.recoverSession(jsonStr);
-        logMessage(
-            'Session successfully recovered for user ID: ${session.user!.id}');
         final builder = DatabaseUserBuilder()
           ..email(session.user?.email)
           ..userId(session.user?.id);
         final user = builder.build();
-        logMessage('login: user = $user');
-        loginStateNotifier.update(true, user);
+        loginStateNotifier?.update(true, user);
         _saveUserSession(session.session!);
         _saveUserData(user, true);
         return true;
@@ -236,7 +264,9 @@ class SupaAuthManager {
   Future<bool> refreshSession() async {
     try {
       final response = await client.auth.refreshSession();
-      logMessage('refreshSession: $response');
+      if (response.session != null) {
+        _saveUserSession(response.session!);
+      }
       return true;
     } catch (e) {
       logFatal('Problems refreshing session: $e');

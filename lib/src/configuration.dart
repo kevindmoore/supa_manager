@@ -34,8 +34,8 @@ class Configuration {
       supabaseInstance = await Supabase.initialize(
         url: url,
         anonKey: apiKey,
-        authCallbackUrlHostname: '$url/auth/va/callback',
-        debug: true,
+        // authCallbackUrlHostname: '$url/auth/va/callback',
+        debug: false,
       );
     } on Exception catch (error) {
       logError(error);
@@ -47,6 +47,6 @@ class Configuration {
         apiKey: apiKey,
         apiSecret: apiSecret,
         loginStateNotifier: loginStateNotifier);
-    supaDatabaseRepository = SupaDatabaseManager(supaAuthManager);
+    supaDatabaseRepository = SupaDatabaseManager(supaAuthManager, Supabase.instance.client);
   }
 }

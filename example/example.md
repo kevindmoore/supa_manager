@@ -11,7 +11,7 @@ In order to start, you'll need to initialize supa_manager with your Supabase api
 uses an api key & secret and url that are in use, the example stores theses values in a secrets.json file stored in the assets
 directory of the example project. You'll have to create your own to use the example project.
 The example project uses Riverpod but you can use whatever state management system you'd like.
-Here is the initialization in `maind.dart`:
+Here is the initialization in `main.dart`:
 
 ```dart
 void main() async {
@@ -24,16 +24,24 @@ void main() async {
 
 ```
 
-SecretLoader is a simple class used to load the supabase url, key & secret. Since these are sensitive values, this file
+The `secrets.json` file will look something like this:
+```json
+{
+  "url" : "https://<yourinstance>.supabase.co",
+  "api_key" : "<your key>",
+  "api_secret": "<your secret>"
+}
+```
+SecretLoader is a simple class (located in the example/lib directory) used to load the supabase url, key & secret. Since these are sensitive values, this file
 is not checked into source control. Create a Configuration class and initialize with the url, api key, and api secret.
-This will create the supabase instance as well as the SupaAuthManager and SupaDatabaseManager.
+This will initialize the supabase instance as well as the SupaAuthManager and SupaDatabaseManager classes.
 
 This example also uses **go_router** for page handling.
 
 ### Authentication
 
 In order to use a database, a user has to be authenticated. The **SupaAuthManager** class handles that. If you look at the **LoginDialog** class you will see
-There are two important methods:
+there are two important methods:
 
 ```dart
   Future<Result<DatabaseUser>> login(String email, String password);
@@ -48,12 +56,12 @@ The **Result** class returns `Result.success`, `Result.failure` or `Result.error
 ### Database
 
 In order to use the database you have to first create the tables in supabase. Since this package assumes that you have your tables based on userId's, you'll 
-need to add a `userId` field in each table. This will will be of type `uuid`. Then you will need to create
+need to add a `userId` field in each table. This will be of type `uuid`. Then you will need to create
 two classes for each table:  One based on `TableData` which gives the table name and a `fromJson` method to convert JSON data to your class.
-The second table is based on `TableEntry`. This class provides a `toJson`, and id and a `addUserId` method to create a copy of your class
+The second table is based on `TableEntry`. This class provides a `toJson`, id and a `addUserId` method to create a copy of your class
 with the userId set.
 
-Here is the Task classes:
+Here are the Task classes:
 
 ```dart
 const taskTableName = 'TodayTasks';
@@ -92,8 +100,8 @@ class TaskTableEntry with TableEntry<Task> {
   set id(int? id) {}
 }
 ```
-### Listing
-To get the list of all entries, call the `readEntries` method:
+### Read a list of Items
+To get the list of all entries, call the `readEntries` method, like this:
 
 ```dart
 Future<Result<List<Task>>> getTasks() async {
@@ -101,16 +109,16 @@ Future<Result<List<Task>>> getTasks() async {
 }
  ```
 
-For more complex calls you can use either
+For more complex calls you can use either:
 ```dart
 Future<Result<List<T>>> readEntriesWhere<T>(TableData<T> tableData, String columnName, int id);
  ```
-or
+or:
 ```dart
 Future<Result<List<T>>> selectEntriesWhere<T>(TableData<T> tableData, List<SelectEntry> selections);
  ```
 
-The first one is for just selecting a specific column. The second one allows you to use **and**/**or** queries.
+where SelectEntry defines the column name, value & type (and/or). The first one is for just selecting a specific column. The second one allows you to use **and**/**or** queries.
  
 Here is an example of selecting tasks:
 ```dart

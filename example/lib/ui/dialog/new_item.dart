@@ -6,8 +6,7 @@ class NewItemDialog extends StatefulWidget {
   final String title;
   final NameCallBack callBack;
 
-  const NewItemDialog({Key? key, required this.title, required this.callBack})
-      : super(key: key);
+  const NewItemDialog({super.key, required this.title, required this.callBack});
 
   @override
   State createState() => _NewItemDialogState();

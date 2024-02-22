@@ -5,7 +5,7 @@ import '../../data/tasks_notifier.dart';
 import '../tasks/task_card.dart';
 
 class Done extends ConsumerStatefulWidget {
-  const Done({Key? key}) : super(key: key);
+  const Done({super.key});
 
   @override
   ConsumerState<Done> createState() => _DoneState();

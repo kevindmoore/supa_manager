@@ -1,23 +1,22 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'database_user.freezed.dart';
+
 part 'database_user.g.dart';
 
 /// Holds information about the currently logged in user
 @freezed
 class DatabaseUser with _$DatabaseUser {
   @JsonSerializable(explicitToJson: true)
-  const factory DatabaseUser({
-    String? sessionId,
-    required String email,
-    String? password,
-    String? name,
-    String? userId
-  }
-  ) = _DatabaseUser;
+  const factory DatabaseUser(
+      {String? sessionId,
+      required String email,
+      String? password,
+      String? name,
+      String? userId}) = _DatabaseUser;
+
   factory DatabaseUser.fromJson(Map<String, dynamic> json) =>
       _$DatabaseUserFromJson(json);
-
 }
 
 /// Class that uses the builder pattern to create new instances with added info

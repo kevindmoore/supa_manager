@@ -14,7 +14,7 @@ class TaskCard extends ConsumerStatefulWidget {
   final OnChanged? onChanged;
   final OnDeleted? onDeleted;
 
-  TaskCard({Key? key, required this.task, this.onChanged, this.onDeleted, }) : super(key: key);
+  TaskCard({super.key, required this.task, this.onChanged, this.onDeleted, });
 
   @override
   ConsumerState createState() => _TaskCardState();

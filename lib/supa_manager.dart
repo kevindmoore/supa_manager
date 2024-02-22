@@ -9,3 +9,4 @@ export 'src/auth/result.dart';
 export 'src/database/supa_database_manager.dart';
 export 'src/database/table_entry.dart';
 export 'src/database/select_entry.dart';
+export 'src/database/auth_storage.dart';

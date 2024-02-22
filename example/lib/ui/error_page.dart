@@ -6,7 +6,7 @@ class ErrorPage extends StatelessWidget {
   final Exception? error;
   late String message;
 
-  ErrorPage({Key? key, this.error}) : super(key: key) {
+  ErrorPage({super.key, this.error}) {
     if (error != null) {
       message = error.toString();
     } else {

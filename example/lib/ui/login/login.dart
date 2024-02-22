@@ -7,7 +7,7 @@ import '../utils.dart';
 typedef VisibilityButtonPressed = void Function(bool);
 
 class LoginDialog extends ConsumerStatefulWidget {
-  const LoginDialog({Key? key}) : super(key: key);
+  const LoginDialog({super.key});
 
   @override
   ConsumerState createState() => _LoginDialogState();

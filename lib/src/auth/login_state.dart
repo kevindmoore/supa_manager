@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'database_user.dart';
 
 /// Notifies listeners of changes in the login state
+/// This needs to be a ChangeNotifier for GoRouter
 class LoginStateNotifier extends ChangeNotifier {
   var state = LoginState(loggedIn: false, user: null);
 
@@ -10,18 +11,24 @@ class LoginStateNotifier extends ChangeNotifier {
     return state.loggedIn;
   }
   void loggedIn(bool value) {
-    state = LoginState(loggedIn: value, user: state.user);
-    notifyListeners();
+    if (state.loggedIn != value) {
+      state = LoginState(loggedIn: value, user: state.user);
+      notifyListeners();
+    }
   }
 
   void user(DatabaseUser? newUser) {
-    state = LoginState(loggedIn: state.loggedIn, user: newUser);
-    notifyListeners();
+    if (state.user != newUser) {
+      state = LoginState(loggedIn: state.loggedIn, user: newUser);
+      notifyListeners();
+    }
   }
 
   void update(bool loggedIn, DatabaseUser? user) {
-    state = LoginState(loggedIn: loggedIn, user: user);
-    notifyListeners();
+    if (state.loggedIn != loggedIn || state.user != user) {
+      state = LoginState(loggedIn: loggedIn, user: user);
+      notifyListeners();
+    }
   }
 }
 

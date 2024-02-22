@@ -25,7 +25,7 @@ class MyRouter {
       GoRoute(
         name: rootRouteName,
         path: '/',
-        redirect: (state) => state.namedLocation(homeRouteName),
+        redirect: (_, state) => state.namedLocation(homeRouteName),
       ),
       GoRoute(
         name: loginRouteName,
@@ -51,9 +51,9 @@ class MyRouter {
     ),
 
     // redirect to the login page if the user is not logged in
-    redirect: (state) {
+    redirect: (_, state) {
       final loginLoc = state.namedLocation(loginRouteName);
-      final loggingIn = state.subloc == loginLoc;
+      final loggingIn = state.path == loginLoc;
       final loggedIn = loginState.isLoggedIn();
       final rootLoc = state.namedLocation(rootRouteName);
 

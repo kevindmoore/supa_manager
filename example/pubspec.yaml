@@ -13,20 +13,25 @@ dependencies:
     sdk: flutter
   supa_manager:
     path: ../
-  shared_preferences: ^2.0.13
-  flutter_riverpod: ^1.0.4
-  json_annotation: ^4.5.0
-  freezed_annotation: ^2.0.3
-  go_router: ^4.2.8
+  shared_preferences: ^2.2.2
+  flutter_riverpod: ^2.4.5
+  json_annotation: ^4.8.1
+  freezed_annotation: ^2.4.1
+  go_router: ^12.1.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^2.0.1
-  build_runner: ^2.1.10
-  json_serializable: ^6.2.0
-  freezed: ^2.0.3
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  freezed:   # the code generator
+#  riverpod_generator: ^2.3.5
+#  # riverpod_lint makes it easier to work with Riverpod
+#  riverpod_lint: ^2.3.3
+#  # import custom_lint too as riverpod_lint depends on it
+#  custom_lint: ^0.5.6
 
 flutter:
 

@@ -6,7 +6,7 @@ import '../../data/tasks_notifier.dart';
 import '../tasks/task_card.dart';
 
 class DoLater extends ConsumerStatefulWidget {
-  const DoLater({Key? key}) : super(key: key);
+  const DoLater({super.key});
 
   @override
   ConsumerState<DoLater> createState() => _DoLaterState();

@@ -7,7 +7,7 @@ import '../dialog/new_item.dart';
 import '../utils.dart';
 
 class Categories extends ConsumerStatefulWidget {
-  const Categories({Key? key}) : super(key: key);
+  const Categories({super.key});
 
   @override
   ConsumerState<Categories> createState() => _CategoriesState();
