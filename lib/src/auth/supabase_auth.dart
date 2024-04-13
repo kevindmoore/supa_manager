@@ -35,14 +35,14 @@ class SupaAuthManager {
   /// When an app starts, call this to load any already logged in user
   Future<DatabaseUser?> loadUser() async {
     if (client.auth.currentUser != null) {
-      final user = _getUser();
+      final user = getUser();
       loginStateNotifier?.update(true, user);
       logMessage('loadUser: User exists, logged in');
       return user;
     }
     final recovered = await _recoverSession();
     if (!recovered) {
-      final user = _getUser();
+      final user = getUser();
       if (user != null &&
           user.email.isNotEmpty &&
           true == user.password?.isNotEmpty) {
@@ -73,7 +73,7 @@ class SupaAuthManager {
   }
 
   /// Get the stored user information
-  DatabaseUser? _getUser() {
+  DatabaseUser? getUser() {
     final userString = prefs.getString(userKey);
     if (userString != null) {
       return DatabaseUser.fromJson(jsonDecode(userString));
@@ -83,13 +83,13 @@ class SupaAuthManager {
 
   /// Get the stored user email
   String? getUserEmail() {
-    final user = _getUser();
+    final user = getUser();
     return user?.email;
   }
 
   /// Get the stored user password
   String? getUserPassword() {
-    final user = _getUser();
+    final user = getUser();
     return user?.password;
   }
 
@@ -229,8 +229,11 @@ class SupaAuthManager {
     // await prefs.setString(sessionKey, session.persistSessionString);
   }
 
-  String  getPersistSessionString(Session session) {
-    final data = {'currentSession': session.toJson(), 'expiresAt': session.expiresAt};
+  String getPersistSessionString(Session session) {
+    final data = {
+      'currentSession': session.toJson(),
+      'expiresAt': session.expiresAt
+    };
     return json.encode(data);
   }
 
@@ -275,17 +278,29 @@ class SupaAuthManager {
   }
 
   /// Reset the password for the given email
-  ///
+  /// TODO: Not sure if this is working correctly
   /// [email] email to reset
   void resetPassword(String email) async {
-    logMessage('Sending email to $email');
     try {
       await client.auth.resetPasswordForEmail(
         email,
-        redirectTo: 'io.supabase.flutter://reset-callback/',
+        // redirectTo: 'io.supabase.flutter://reset-callback/',
       );
     } catch (error) {
       logFatal('Problems resetting password: $error');
+    }
+  }
+
+  /// Update user's password
+  /// TODO: Not sure if this is working correctly
+  Future<User?> updateUserPassword(String email, String password) async {
+    try {
+      final response = await client.auth
+          .updateUser(UserAttributes(email: email, password: password));
+      return response.user;
+    } catch (error) {
+      logFatal('Problems resetting password: $error');
+      return null;
     }
   }
 }

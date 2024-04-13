@@ -166,7 +166,7 @@ class SupaDatabaseManager {
   /// [columnName] column name
   /// [columnValue] value of column to match
   Future<Result<List<T>>> readEntriesWhere<T>(
-      TableData<T> tableData, String columnName, int columnValue) async {
+      TableData<T> tableData, String columnName, Object columnValue) async {
     final entries = <T>[];
     if (authManager?.isLoggedIn() == false) {
       return const Result.errorMessage(1, 'Not logged in');

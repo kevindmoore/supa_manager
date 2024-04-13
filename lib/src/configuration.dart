@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// * The Api Key. This will be a very, very long string of characters from the supabase website
 /// * The Api Secret. This will be a very, very long string of characters from the supabase website
 /// Make sure you call initialize or supaBaseAuthProvider will fail. Do this in your main function
+/// SecretLoader is in the example package
 /// ```code
 /// void main() async {
 ///   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +35,6 @@ class Configuration {
       supabaseInstance = await Supabase.initialize(
         url: url,
         anonKey: apiKey,
-        // authCallbackUrlHostname: '$url/auth/va/callback',
         debug: false,
       );
     } on Exception catch (error) {

@@ -1,3 +1,6 @@
+## 1.0.1
+* Update to 2.5.0 supabase library
+* Add better documentation
 ## 1.0.0-dev.9
 * Update to 1.10.12 supabase library
 * 
