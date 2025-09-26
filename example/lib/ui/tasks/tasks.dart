@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supa_manager/supa_manager.dart';
 
 import '../../data/models/tasks.dart';
 import '../../data/repository.dart';
@@ -65,13 +66,25 @@ class _TasksState extends ConsumerState<Tasks> {
     final repository = ref.read(repositoryProvider);
     final result =
         await repository.addTask(Task(name: name, done: false, doLater: false));
-    return result.when(
-        success: (task) {
-          ref.read(taskNotifierProvider.notifier).addTask(task);
-          return task;
-        },
-        failure: (_) => null,
-        errorMessage: (c, m) => null);
+    switch (result) {
+      case Success(data: final task):
+        ref.read(taskNotifierProvider.notifier).addTask(task!);
+        return task;
+      case Failure(error: final error):
+        debugPrint('addTask: $error');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error.toString())));
+        }
+      case ErrorMessage(message: final message, code: _):
+        debugPrint('addTask: $message');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+              SnackBar(content: Text(message ?? 'Problems getting data')));
+        }
+    }
+    return null;
   }
 
   void showNewDialog(String title, NameCallBack callBack) {

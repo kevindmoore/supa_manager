@@ -206,7 +206,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
               TextButton(
                   style: ButtonStyle(
                       foregroundColor:
-                          MaterialStateProperty.all<Color>(Colors.black)),
+                          WidgetStateProperty.all<Color>(Colors.black)),
                   onPressed: () {
                     setState(() {
                       useLoginScreen = true;

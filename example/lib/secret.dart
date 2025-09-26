@@ -5,15 +5,13 @@ import 'package:flutter/services.dart' show rootBundle;
 class Secrets {
   final String url;
   final String apiKey;
-  final String apiSecret;
 
-  Secrets({required this.url, required this.apiKey, required this.apiSecret});
+  Secrets({required this.url, required this.apiKey});
 
   factory Secrets.fromJson(Map<String, dynamic> jsonMap) {
     return Secrets(
         url: jsonMap['url'],
-        apiKey: jsonMap['api_key'],
-        apiSecret: jsonMap['api_secret']);
+        apiKey: jsonMap['api_key']);
   }
 }
 

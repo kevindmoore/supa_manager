@@ -1,30 +1,31 @@
 name: supa_manager
 description: This package makes it easy to use the supabase database. It provides generic methods for performing CRUD operations (Create, Read, Update and Delete).
-version: 1.0.1
+publish_to:
+version: 1.0.2
 repository: https://github.com/kevindmoore/supa_manager
 homepage: https://github.com/kevindmoore/supa_manager
 
 environment:
-  sdk: ">=2.17.6 <4.0.0"
+  sdk: '>=3.7.0 <4.0.0'
   flutter: ">=1.17.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.3
   lumberdash: ^3.0.0
   colorize_lumberdash: ^3.0.0
-  supabase_flutter: ^2.5.0
-  gotrue: ^2.6.0
-  freezed_annotation: ^2.4.1
+  supabase_flutter: ^2.9.0
+  gotrue: ^2.9.0
+  json_annotation: ^4.9.0
+  freezed_annotation: ^3.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
-  freezed: ^2.5.1
+  freezed:
   build_runner: ^2.4.9
-  json_serializable: ^6.7.1
+  json_serializable: ^6.9.5
   # Supabase depends on 3.0.0
   lints: ^3.0.0
-

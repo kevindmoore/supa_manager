@@ -55,7 +55,7 @@ BoxDecoration createWhiteBorder() {
         BoxShadow(
             blurRadius: 16.0,
             offset: const Offset(0.0, 4.0),
-            color: Colors.black.withOpacity(0.1))
+            color: Colors.black.withAlpha(25))
       ]);
 }
 

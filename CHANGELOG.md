@@ -1,3 +1,5 @@
+## 1.0.2
+* Fix issues for latest version. Remove API secret as it was not needed
 ## 1.0.1
 * Update to 2.5.0 supabase library
 * Add better documentation

@@ -1,0 +1,3 @@
+class SignedOutException implements Exception {
+
+}

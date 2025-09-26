@@ -14,8 +14,8 @@ List<Map<String, dynamic>> categoryToDatabaseJson(
 }
 
 @freezed
-class Category with _$Category {
-  @JsonSerializable(explicitToJson: true)
+abstract class Category with _$Category {
+  // @JsonSerializable(explicitToJson: true)
   factory Category({
     required String name,
     @JsonKey(includeIfNull: false)

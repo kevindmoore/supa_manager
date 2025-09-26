@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supa_manager/supa_manager.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 /// In order to initialize the database you need the following:
 /// * The url to your supabase instance. This will be in the format of https://<some long set of characters>.supabase.co
 /// * The Api Key. This will be a very, very long string of characters from the supabase website
@@ -17,7 +16,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///   final secrets = await SecretLoader(secretPath: 'assets/secrets.json').load();
 ///   configuration = Configuration();
 ///   await configuration.initialize(
-///     secrets.url, secrets.apiKey, secrets.apiSecret);
+///     secrets.url, secrets.apiKey);
 ///   runApp(child: const MyApp());
 /// }
 /// ```
@@ -29,8 +28,11 @@ class Configuration {
   late SharedPreferences globalSharedPreferences;
   final loginStateNotifier = LoginStateNotifier();
 
-  Future initialize(String url,
-      String apiKey, String apiSecret) async {
+  Future initialize(
+    String url,
+    String apiKey,
+    String? emailRedirectUrl,
+  ) async {
     try {
       supabaseInstance = await Supabase.initialize(
         url: url,
@@ -42,11 +44,14 @@ class Configuration {
     }
     globalSharedPreferences = await SharedPreferences.getInstance();
     supaAuthManager = SupaAuthManager(
-        client: supabaseInstance.client,
-        prefs: globalSharedPreferences,
-        apiKey: apiKey,
-        apiSecret: apiSecret,
-        loginStateNotifier: loginStateNotifier);
-    supaDatabaseRepository = SupaDatabaseManager(supaAuthManager, Supabase.instance.client);
+      client: supabaseInstance.client,
+      prefs: globalSharedPreferences,
+      apiKey: apiKey,
+      loginStateNotifier: loginStateNotifier,
+    );
+    supaDatabaseRepository = SupaDatabaseManager(
+      supaAuthManager,
+      Supabase.instance.client,
+    );
   }
 }

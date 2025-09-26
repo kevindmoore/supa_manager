@@ -13,7 +13,7 @@ final repositoryProvider = ChangeNotifierProvider<Repository>((ref) {
 });
 
 class Repository extends ChangeNotifier {
-  final ChangeNotifierProviderRef ref;
+  final Ref ref;
   late SupaDatabaseManager databaseRepository;
 
 

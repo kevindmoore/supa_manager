@@ -1,3 +1,5 @@
+import 'package:lumberdash/lumberdash.dart';
+
 import '../../supa_manager.dart';
 
 /// Holds the table name and a method to convert a json map to a class
@@ -17,29 +19,37 @@ class TableDataImpl<T> extends TableData<T> {
   }
 
   @override
-  T fromJson(Map<String, dynamic> json) => this.fromJsonFunction(json);
+  T fromJson(Map<String, dynamic> json) => fromJsonFunction(json);
 
   Future<T?> getEntry(SupaDatabaseManager databaseRepository,
       int id) async {
     final result = await databaseRepository.readEntry(this, id);
-    return result.maybeWhen(
-        success: (data) {
-          return data;
-        },
-        orElse: () => null);
+    switch (result) {
+      case Success(data: final data):
+        return data;
+      case Failure(error: final error):
+        logFatal('getEntry: Error  $error');
+        return null;
+      case ErrorMessage(message: final message):
+        logFatal('getEntry: Error  $message');
+        return null;
+    }
   }
 
   Future<List<T>> getEntries(SupaDatabaseManager databaseRepository,
       ) async {
     final result = await databaseRepository.readEntries(this);
-    return result.maybeWhen(
-        success: (data) {
-          return data;
-        },
-        orElse: () => []);
+    switch (result) {
+      case Success(data: final data):
+        return data;
+      case Failure(error: final error):
+        logFatal('getEntries: Error  $error');
+        return [];
+      case ErrorMessage(message: final message):
+        logFatal('getEntries: Error  $message');
+        return [];
+    }
   }
-
-
 }
 
 /// Implement this mixin to implement the `toJson` and `addUserId` methods
@@ -83,31 +93,46 @@ class TableEntryImpl<T> with TableEntry<T> {
   Future<T?> addEntry(
       SupaDatabaseManager databaseRepository, TableData<T> tableData) async {
     final result = await databaseRepository.addEntry(tableData, this);
-    return result.maybeWhen(
-        success: (data) {
-          return data;
-        },
-        orElse: () => null);
+    switch (result) {
+      case Success(data: final data):
+        return data;
+      case Failure(error: final error):
+        logFatal('addEntry: Error  $error');
+        return null;
+      case ErrorMessage(message: final message):
+        logFatal('addEntry: Error  $message');
+        return null;
+    }
   }
 
   Future<T?> updateEntry(
       SupaDatabaseManager databaseRepository, TableData<T> tableData) async {
     final result = await databaseRepository.updateTableEntry(tableData, this);
-    return result.maybeWhen(
-        success: (data) {
-          return data;
-        },
-        orElse: () => null);
+    switch (result) {
+      case Success(data: final data):
+        return data;
+      case Failure(error: final error):
+        logFatal('updateEntry: Error  $error');
+        return null;
+      case ErrorMessage(message: final message):
+        logFatal('updateEntry: Error  $message');
+        return null;
+    }
   }
 
   Future<T?> deleteEntry(
       SupaDatabaseManager databaseRepository, TableData<T> tableData) async {
     final result = await databaseRepository.deleteTableEntry(tableData, this);
-    return result.maybeWhen(
-        success: (data) {
-          return data;
-        },
-        orElse: () => null);
+    switch (result) {
+      case Success(data: final data):
+        return data;
+      case Failure(error: final error):
+        logFatal('deleteEntry: Error  $error');
+        return null;
+      case ErrorMessage(message: final message):
+        logFatal('deleteEntry: Error  $message');
+        return null;
+    }
   }
 }
 
@@ -134,9 +159,9 @@ mixin HasUserId {
 }
 
 /// Mixin for a class that has a copyWith method
-mixin hasCopyWith<T> {
-  T get copyWith;
-}
+// mixin hasCopyWith<T> {
+//   T get copyWith;
+// }
 
 /// Definition of a function that takes data and returns a TableEntry class
 typedef TableEntryCreator<T> = TableEntry<T> Function(T data);

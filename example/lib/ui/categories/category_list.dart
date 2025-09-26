@@ -1,6 +1,9 @@
+import 'dart:developer';
+
 import 'package:example/data/repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supa_manager/supa_manager.dart';
 
 import '../../data/models/categories.dart';
 import '../dialog/new_item.dart';
@@ -77,18 +80,18 @@ class _CategoriesState extends ConsumerState<Categories> {
   Future<List<Category>> getCategoryData() async {
     final repository = ref.watch(repositoryProvider);
     final result = await repository.readAllCategories();
-    result.when(
-        success: (data) {
-          return data;
-        },
-        failure: (Exception error) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(error.toString())));
-        },
-        errorMessage: (int code, String? message) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(message ?? 'Problems getting data')));
-        });
+    switch (result) {
+      case Success(data: final data):
+        return data;
+      case Failure(error: final error):
+        log('Problems getting categories', error: error);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+      case ErrorMessage(message: final message, code: _):
+        log('Problems getting categories: $message');
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message ?? 'Problems getting data')));
+    }
     return <Category>[];
   }
 

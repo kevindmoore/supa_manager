@@ -6,6 +6,7 @@ export 'src/auth/supabase_auth.dart';
 export 'src/auth/database_user.dart';
 export 'src/auth/login_state.dart';
 export 'src/auth/result.dart';
+export 'src/auth/errors.dart';
 export 'src/database/supa_database_manager.dart';
 export 'src/database/table_entry.dart';
 export 'src/database/select_entry.dart';

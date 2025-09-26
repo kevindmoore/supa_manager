@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:lumberdash/lumberdash.dart';
+import 'package:supa_manager/src/auth/errors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../auth/result.dart';
@@ -34,7 +35,9 @@ class SupaDatabaseManager {
   Future<Result<List<dynamic>>> _listTable(String tableName) async {
     try {
       if (authManager?.isLoggedIn() == false) {
-        return const Result.errorMessage(1, 'Not logged in');
+        if (!await authManager!.refreshSession()) {
+          return Result.failure(SignedOutException());
+        }
       }
       final data = await client.from(tableName).select();
       return Result.success(data);
@@ -55,7 +58,9 @@ class SupaDatabaseManager {
       String tableName, List<Map<String, dynamic>> tableData) async {
     try {
       if (authManager?.isLoggedIn() == false) {
-        return const Result.errorMessage(1, 'Not logged in');
+        if (!await authManager!.refreshSession()) {
+          return Result.failure(SignedOutException());
+        }
       }
       final data = await client.from(tableName).insert(tableData).select();
       return Result.success(data);
@@ -76,7 +81,9 @@ class SupaDatabaseManager {
       String tableName, Map<String, dynamic> tableMap) async {
     try {
       if (authManager?.isLoggedIn() == false) {
-        return const Result.errorMessage(1, 'Not logged in');
+        if (!await authManager!.refreshSession()) {
+          return Result.failure(SignedOutException());
+        }
       }
       final data = await client.from(tableName).insert(tableMap).select();
       return Result.success(data);
@@ -96,7 +103,9 @@ class SupaDatabaseManager {
   Future<Result<T?>> readEntry<T>(TableData<T> tableData, int id) async {
     try {
       if (authManager?.isLoggedIn() == false) {
-        return const Result.errorMessage(1, 'Not logged in');
+        if (!await authManager!.refreshSession()) {
+          return Result.failure(SignedOutException());
+        }
       }
       var select =
           client.from(tableData.tableName).select().eq(idFieldName, id);
@@ -123,22 +132,25 @@ class SupaDatabaseManager {
   /// [tableData] contains table info
   Future<Result<List<T>>> readEntries<T>(TableData<T> tableData) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     final entries = <T>[];
     final result = await _listTable(tableData.tableName);
-    return result.when(success: (data) {
-      if (data != null && data.isNotEmpty) {
-        for (final json in data) {
-          entries.add(tableData.fromJson(json));
+    switch (result) {
+      case Success(data: final data):
+        if (data.isNotEmpty) {
+          for (final json in data) {
+            entries.add(tableData.fromJson(json));
+          }
         }
-      }
-      return Result.success(entries);
-    }, failure: (error) {
-      return Result.failure(error);
-    }, errorMessage: (code, message) {
-      return Result.errorMessage(code, message);
-    });
+        return Result.success(entries);
+      case Failure(error: final error):
+        return Result.failure(error);
+      case ErrorMessage(message: final message, code: final code):
+        return Result.errorMessage(code, message);
+    }
   }
 
   /// Return a list of entries for the given table
@@ -146,7 +158,9 @@ class SupaDatabaseManager {
   /// [functionName] Name of function to run
   Future<Result<List<dynamic>>> runFunction(String functionName) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     try {
       final result = await client.rpc(functionName);
@@ -169,7 +183,9 @@ class SupaDatabaseManager {
       TableData<T> tableData, String columnName, Object columnValue) async {
     final entries = <T>[];
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     try {
       var select =
@@ -181,7 +197,7 @@ class SupaDatabaseManager {
       // if (data != null && data is List<dynamic> && data.isNotEmpty) {
       if (data.isNotEmpty) {
         await Future.forEach(data, (json) async {
-          final entry = tableData.fromJson(json as Map<String, dynamic>);
+          final entry = tableData.fromJson(json);
           entries.add(entry);
         });
       }
@@ -203,7 +219,9 @@ class SupaDatabaseManager {
   Future<Result<List<T>>> buildSelect<T>(
       TableData<T> tableData, SelectBuilder builder) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     final entries = <T>[];
     try {
@@ -217,7 +235,7 @@ class SupaDatabaseManager {
       // if (data != null && data is List<dynamic> && data.isNotEmpty) {
       if (data.isNotEmpty) {
         await Future.forEach(data, (json) async {
-          final entry = tableData.fromJson(json as Map<String, dynamic>);
+          final entry = tableData.fromJson(json);
           entries.add(entry);
         });
       }
@@ -238,7 +256,9 @@ class SupaDatabaseManager {
   Future<Result<List<T>>> selectEntriesWhere<T>(
       TableData<T> tableData, List<SelectEntry> selections) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     final entries = <T>[];
     try {
@@ -259,7 +279,7 @@ class SupaDatabaseManager {
       // if (data != null && data is List<dynamic> && data.isNotEmpty) {
       if (data.isNotEmpty) {
         await Future.forEach(data, (json) async {
-          final entry = tableData.fromJson(json as Map<String, dynamic>);
+          final entry = tableData.fromJson(json);
           entries.add(entry);
         });
       }
@@ -302,23 +322,26 @@ class SupaDatabaseManager {
   Future<Result<T?>> addEntry<T>(
       TableData<T> tableData, TableEntry<T> tableEntry) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     final updatedEntry = tableEntry.addUserId(client.auth.currentUser!.id);
     final result =
         await addDataToTable(tableData.tableName, updatedEntry.toJson());
-    return result.when(success: (data) {
-      if (data != null && data.isNotEmpty) {
-        return Result.success(tableData.fromJson(data[0]));
-      }
-      return const Result.success(null);
-    }, failure: (error) {
-      logFatal('addEntry: Error  $error');
-      return Result.failure(error);
-    }, errorMessage: (code, message) {
-      logFatal('addEntry: Error  $message');
-      return Result.errorMessage(code, message);
-    });
+    switch (result) {
+      case Success(data: final data):
+        if (data.isNotEmpty) {
+          return Result.success(tableData.fromJson(data[0]));
+        }
+        return Result.success(null);
+      case Failure(error: final error):
+        logFatal('addEntry: Error  $error');
+        return Result.failure(error);
+      case ErrorMessage(message: final message, code: final code):
+        logFatal('addEntry: Error  $message');
+        return Result.errorMessage(code, message);
+    }
   }
 
   /// For the given table, add a list of entries
@@ -328,7 +351,9 @@ class SupaDatabaseManager {
   Future<Result<List<T>>> addEntries<T>(
       TableData<T> tableData, List<TableEntry<T>> tableEntries) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     final jsonEntries = <Map<String, dynamic>>[];
     for (final entry in tableEntries) {
@@ -336,22 +361,23 @@ class SupaDatabaseManager {
       jsonEntries.add(updatedEntry.toJson());
     }
     final result = await addListDataToTable(tableData.tableName, jsonEntries);
-    return result.when(success: (data) {
-      final addedEntries = <T>[];
-      if (data != null && data.isNotEmpty) {
-        for (final entry in data) {
-          addedEntries.add(tableData.fromJson(entry));
+    switch (result) {
+      case Success(data: final data):
+        final addedEntries = <T>[];
+        if (data.isNotEmpty) {
+          for (final entry in data) {
+            addedEntries.add(tableData.fromJson(entry));
+          }
+          return Result.success(addedEntries);
         }
         return Result.success(addedEntries);
-      }
-      return Result.success(addedEntries);
-    }, failure: (error) {
-      logFatal('addEntries: Error  $error');
-      return Result.failure(error);
-    }, errorMessage: (code, message) {
-      logFatal('addEntries: Error  $message');
-      return Result.errorMessage(code, message);
-    });
+      case Failure(error: final error):
+        logFatal('addEntry: Error  $error');
+        return Result.failure(error);
+      case ErrorMessage(message: final message, code: final code):
+        logFatal('addEntry: Error  $message');
+        return Result.errorMessage(code, message);
+    }
   }
 
   /// Update a single table entry
@@ -361,7 +387,9 @@ class SupaDatabaseManager {
   Future<Result<T?>> updateTableEntry<T>(
       TableData<T> tableData, TableEntry<T> tableEntry) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     if (tableEntry.id == null) {
       logFatal('updateTableEntry: id is null');
@@ -394,7 +422,9 @@ class SupaDatabaseManager {
   Future<Result<T?>> deleteTableEntry<T>(
       TableData<T> tableData, TableEntry<T> tableEntry) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     if (tableEntry.id == null) {
       logFatal('deleteTableEntry: id is null');
@@ -421,10 +451,43 @@ class SupaDatabaseManager {
     }
   }
 
+  /// Delete all table entries matching the given column and value
+  ///
+  /// [tableData] Describe Table
+  Future<Result<T?>> deleteTableEntryWhere<T>(
+      TableData<T> tableData, String columnName, Object columnValue) async {
+    if (authManager?.isLoggedIn() == false) {
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
+    }
+    try {
+      final data = await client
+          .from(tableData.tableName)
+          .delete()
+          .eq(columnName, columnValue)
+          .select();
+
+      // if (data != null && data is List<dynamic> && data.isNotEmpty) {
+      if (data.isNotEmpty) {
+        return Result.success(tableData.fromJson(data[0]));
+      }
+      return const Result.success(null);
+    } on Exception catch (error) {
+      logFatal('deleteTableEntry: $error');
+      if (await _handlePostgrestError(error)) {
+        return deleteTableEntryWhere(tableData, columnName, columnValue);
+      }
+      return Result.failure(error);
+    }
+  }
+
   /// Delete all table entries. WARNING: This will delete all entries
   Future<Result<T?>> deleteAll<T>(TableData<T> tableData) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     try {
       // NOTE: Requires where clause. Use a value that will always be true
@@ -439,10 +502,32 @@ class SupaDatabaseManager {
     }
   }
 
+  /// Delete all table entries for the given user. WARNING: This will delete all entries for that user
+  Future<Result<T?>> deleteAllEntries<T>(TableData<T> tableData) async {
+    if (authManager?.isLoggedIn() == false) {
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
+    }
+    try {
+      // NOTE: Requires where clause. Use a value that will always be true
+      await client.from(tableData.tableName).delete().eq(userIdFieldName, client.auth.currentUser!.id,);
+      return const Result.success(null);
+    } on Exception catch (error) {
+      logFatal('deleteTableEntry: $error');
+      if (await _handlePostgrestError(error)) {
+        return deleteAll(tableData);
+      }
+      return Result.failure(error);
+    }
+  }
+
   Future<Result<String?>> uploadFile(
       String bucket, String folderName, String fileName, File file) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     try {
       final path = await client.storage.from(bucket).updateBinary(
@@ -466,7 +551,9 @@ class SupaDatabaseManager {
   Future<Result<bool>> downloadFile(
       String bucket, String folderName, String fileName, File file) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     try {
       final u8List = await client.storage.from(bucket).download(
@@ -483,7 +570,9 @@ class SupaDatabaseManager {
   Future<Result<List<FileObject>?>> deleteFile(
       String bucket, String folderName, String fileName) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     try {
       final files = await client.storage.from(bucket).remove(
@@ -499,7 +588,9 @@ class SupaDatabaseManager {
   Future<Result<List<FileObject>?>> getBucketList(
       String bucket, String path) async {
     if (authManager?.isLoggedIn() == false) {
-      return const Result.errorMessage(1, 'Not logged in');
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
     }
     try {
       final files = await client.storage.from(bucket).list(path: path);
@@ -522,5 +613,43 @@ class SupaDatabaseManager {
       }
     }
     return false;
+  }
+
+  /// Update all table entries with the given selection
+  ///
+  /// [tableData] Describe Table
+  /// [updateJson] JSON for what to update
+  /// [selections] list of [SelectEntry] items
+  Future<Result<bool>> updateTableEntryWhere<T>(TableData<T> tableData, Map<String, dynamic> updateJson, List<SelectEntry> selections ) async {
+    if (authManager?.isLoggedIn() == false) {
+      if (!await authManager!.refreshSession()) {
+        return Result.failure(SignedOutException());
+      }
+    }
+    try {
+      var update = client
+          .from(tableData.tableName)
+          .update(updateJson);
+      if (tableData.hasUserId) {
+        update = update.eq(userIdFieldName, client.auth.currentUser!.id);
+      }
+      for (final selection in selections) {
+        if (selection.type == SelectType.and) {
+          update = update.eq(selection.columnName, selection.value);
+        }
+      }
+      final orString = buildOrString(selections);
+      if (orString.isNotEmpty) {
+        update = update.or(orString);
+      }
+      await update;
+      return const Result.success(true);
+    } on Exception catch (error) {
+      logFatal('updateTableEntryWhere Error: $error');
+      if (await _handlePostgrestError(error)) {
+        return updateTableEntryWhere(tableData, updateJson, selections);
+      }
+      return Result.failure(error);
+    }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:example/data/repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supa_manager/supa_manager.dart';
 
 import '../../data/models/tasks.dart';
 import '../utils.dart';
@@ -107,16 +108,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
   void updateTask(Task task, Repository repository) async {
     final result = await repository.updateTask(task);
-    result.when(
-        success: (updatedTask) => widget.task = updatedTask,
-        failure: (Exception error) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(error.toString())));
-        },
-        errorMessage: (int code, String? message) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(message ?? 'Problems Updating Task')));
-        });
+    switch (result) {
+      case Success(data: final updatedTask):
+        widget.task = updatedTask!;
+      case Failure(error: final error):
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+      case ErrorMessage(message: final message, code: _):
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message ?? 'Problems getting data')));
+    }
     widget.onChanged?.call(task);
   }
 }

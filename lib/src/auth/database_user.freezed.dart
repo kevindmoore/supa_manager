@@ -1,3 +1,4 @@
+// dart format width=80
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint
@@ -9,231 +10,151 @@ part of 'database_user.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
-
-DatabaseUser _$DatabaseUserFromJson(Map<String, dynamic> json) {
-  return _DatabaseUser.fromJson(json);
-}
 
 /// @nodoc
 mixin _$DatabaseUser {
-  String? get sessionId => throw _privateConstructorUsedError;
-  String get email => throw _privateConstructorUsedError;
-  String? get password => throw _privateConstructorUsedError;
-  String? get name => throw _privateConstructorUsedError;
-  String? get userId => throw _privateConstructorUsedError;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $DatabaseUserCopyWith<DatabaseUser> get copyWith =>
-      throw _privateConstructorUsedError;
+ String? get sessionId; String get email; String? get password; String? get name; String? get userId;
+/// Create a copy of DatabaseUser
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DatabaseUserCopyWith<DatabaseUser> get copyWith => _$DatabaseUserCopyWithImpl<DatabaseUser>(this as DatabaseUser, _$identity);
+
+  /// Serializes this DatabaseUser to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DatabaseUser&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.email, email) || other.email == email)&&(identical(other.password, password) || other.password == password)&&(identical(other.name, name) || other.name == name)&&(identical(other.userId, userId) || other.userId == userId));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,sessionId,email,password,name,userId);
+
+@override
+String toString() {
+  return 'DatabaseUser(sessionId: $sessionId, email: $email, password: $password, name: $name, userId: $userId)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $DatabaseUserCopyWith<$Res> {
-  factory $DatabaseUserCopyWith(
-          DatabaseUser value, $Res Function(DatabaseUser) then) =
-      _$DatabaseUserCopyWithImpl<$Res, DatabaseUser>;
-  @useResult
-  $Res call(
-      {String? sessionId,
-      String email,
-      String? password,
-      String? name,
-      String? userId});
-}
+abstract mixin class $DatabaseUserCopyWith<$Res>  {
+  factory $DatabaseUserCopyWith(DatabaseUser value, $Res Function(DatabaseUser) _then) = _$DatabaseUserCopyWithImpl;
+@useResult
+$Res call({
+ String? sessionId, String email, String? password, String? name, String? userId
+});
 
+
+
+
+}
 /// @nodoc
-class _$DatabaseUserCopyWithImpl<$Res, $Val extends DatabaseUser>
+class _$DatabaseUserCopyWithImpl<$Res>
     implements $DatabaseUserCopyWith<$Res> {
-  _$DatabaseUserCopyWithImpl(this._value, this._then);
+  _$DatabaseUserCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final DatabaseUser _self;
+  final $Res Function(DatabaseUser) _then;
 
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? sessionId = freezed,
-    Object? email = null,
-    Object? password = freezed,
-    Object? name = freezed,
-    Object? userId = freezed,
-  }) {
-    return _then(_value.copyWith(
-      sessionId: freezed == sessionId
-          ? _value.sessionId
-          : sessionId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      password: freezed == password
-          ? _value.password
-          : password // ignore: cast_nullable_to_non_nullable
-              as String?,
-      name: freezed == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String?,
-      userId: freezed == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
-  }
+/// Create a copy of DatabaseUser
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? sessionId = freezed,Object? email = null,Object? password = freezed,Object? name = freezed,Object? userId = freezed,}) {
+  return _then(_self.copyWith(
+sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String?,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,password: freezed == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
+as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
 }
 
-/// @nodoc
-abstract class _$$DatabaseUserImplCopyWith<$Res>
-    implements $DatabaseUserCopyWith<$Res> {
-  factory _$$DatabaseUserImplCopyWith(
-          _$DatabaseUserImpl value, $Res Function(_$DatabaseUserImpl) then) =
-      __$$DatabaseUserImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {String? sessionId,
-      String email,
-      String? password,
-      String? name,
-      String? userId});
 }
 
-/// @nodoc
-class __$$DatabaseUserImplCopyWithImpl<$Res>
-    extends _$DatabaseUserCopyWithImpl<$Res, _$DatabaseUserImpl>
-    implements _$$DatabaseUserImplCopyWith<$Res> {
-  __$$DatabaseUserImplCopyWithImpl(
-      _$DatabaseUserImpl _value, $Res Function(_$DatabaseUserImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? sessionId = freezed,
-    Object? email = null,
-    Object? password = freezed,
-    Object? name = freezed,
-    Object? userId = freezed,
-  }) {
-    return _then(_$DatabaseUserImpl(
-      sessionId: freezed == sessionId
-          ? _value.sessionId
-          : sessionId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      password: freezed == password
-          ? _value.password
-          : password // ignore: cast_nullable_to_non_nullable
-              as String?,
-      name: freezed == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String?,
-      userId: freezed == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
-  }
-}
 
 /// @nodoc
 
 @JsonSerializable(explicitToJson: true)
-class _$DatabaseUserImpl implements _DatabaseUser {
-  const _$DatabaseUserImpl(
-      {this.sessionId,
-      required this.email,
-      this.password,
-      this.name,
-      this.userId});
+class _DatabaseUser implements DatabaseUser {
+  const _DatabaseUser({this.sessionId, required this.email, this.password, this.name, this.userId});
+  factory _DatabaseUser.fromJson(Map<String, dynamic> json) => _$DatabaseUserFromJson(json);
 
-  factory _$DatabaseUserImpl.fromJson(Map<String, dynamic> json) =>
-      _$$DatabaseUserImplFromJson(json);
+@override final  String? sessionId;
+@override final  String email;
+@override final  String? password;
+@override final  String? name;
+@override final  String? userId;
 
-  @override
-  final String? sessionId;
-  @override
-  final String email;
-  @override
-  final String? password;
-  @override
-  final String? name;
-  @override
-  final String? userId;
+/// Create a copy of DatabaseUser
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DatabaseUserCopyWith<_DatabaseUser> get copyWith => __$DatabaseUserCopyWithImpl<_DatabaseUser>(this, _$identity);
 
-  @override
-  String toString() {
-    return 'DatabaseUser(sessionId: $sessionId, email: $email, password: $password, name: $name, userId: $userId)';
-  }
-
-  @override
-  bool operator ==(dynamic other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$DatabaseUserImpl &&
-            (identical(other.sessionId, sessionId) ||
-                other.sessionId == sessionId) &&
-            (identical(other.email, email) || other.email == email) &&
-            (identical(other.password, password) ||
-                other.password == password) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.userId, userId) || other.userId == userId));
-  }
-
-  @JsonKey(ignore: true)
-  @override
-  int get hashCode =>
-      Object.hash(runtimeType, sessionId, email, password, name, userId);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$DatabaseUserImplCopyWith<_$DatabaseUserImpl> get copyWith =>
-      __$$DatabaseUserImplCopyWithImpl<_$DatabaseUserImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$DatabaseUserImplToJson(
-      this,
-    );
-  }
+@override
+Map<String, dynamic> toJson() {
+  return _$DatabaseUserToJson(this, );
 }
 
-abstract class _DatabaseUser implements DatabaseUser {
-  const factory _DatabaseUser(
-      {final String? sessionId,
-      required final String email,
-      final String? password,
-      final String? name,
-      final String? userId}) = _$DatabaseUserImpl;
-
-  factory _DatabaseUser.fromJson(Map<String, dynamic> json) =
-      _$DatabaseUserImpl.fromJson;
-
-  @override
-  String? get sessionId;
-  @override
-  String get email;
-  @override
-  String? get password;
-  @override
-  String? get name;
-  @override
-  String? get userId;
-  @override
-  @JsonKey(ignore: true)
-  _$$DatabaseUserImplCopyWith<_$DatabaseUserImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DatabaseUser&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.email, email) || other.email == email)&&(identical(other.password, password) || other.password == password)&&(identical(other.name, name) || other.name == name)&&(identical(other.userId, userId) || other.userId == userId));
 }
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,sessionId,email,password,name,userId);
+
+@override
+String toString() {
+  return 'DatabaseUser(sessionId: $sessionId, email: $email, password: $password, name: $name, userId: $userId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DatabaseUserCopyWith<$Res> implements $DatabaseUserCopyWith<$Res> {
+  factory _$DatabaseUserCopyWith(_DatabaseUser value, $Res Function(_DatabaseUser) _then) = __$DatabaseUserCopyWithImpl;
+@override @useResult
+$Res call({
+ String? sessionId, String email, String? password, String? name, String? userId
+});
+
+
+
+
+}
+/// @nodoc
+class __$DatabaseUserCopyWithImpl<$Res>
+    implements _$DatabaseUserCopyWith<$Res> {
+  __$DatabaseUserCopyWithImpl(this._self, this._then);
+
+  final _DatabaseUser _self;
+  final $Res Function(_DatabaseUser) _then;
+
+/// Create a copy of DatabaseUser
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? sessionId = freezed,Object? email = null,Object? password = freezed,Object? name = freezed,Object? userId = freezed,}) {
+  return _then(_DatabaseUser(
+sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String?,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,password: freezed == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
+as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+// dart format on

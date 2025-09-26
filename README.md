@@ -19,7 +19,7 @@ flutter pub add supa_manager
 To start using this package, you need to create an instance of the Configuration class:
 ```dart
   final configuration = Configuration();
-  await configuration.initialize('supabase url', 'supabase api key', 'supabase API secret');
+  await configuration.initialize('supabase url', 'supabase api key');
 ```
 This will initialize the Supabase client with the provided url, api key and api secret.
 
@@ -53,7 +53,7 @@ class TaskTableData extends TableData<Task> {
   }
 }
 ```
-```dart
+
 ### Creation
 `databaseRepository.addEntry(tableData, TableEntry(item));`
 ### Reading

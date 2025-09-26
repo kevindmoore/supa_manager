@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supa_manager/supa_manager.dart';
 
 import 'models/tasks.dart';
 import 'repository.dart';
@@ -18,13 +19,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
   void initialize() async {
     final result = await repository.getTasks();
-    result.when(success: (data) {
-      state = data;
-    }, failure: (Exception error) {
-      log('Problems getting tasks', error: error);
-    }, errorMessage: (int code, String? message) {
-      log('Problems getting tasks: $message');
-    });
+    switch (result) {
+      case Success(data: final data):
+        state = data;
+      case Failure(error: final error):
+        log('Problems getting tasks', error: error);
+      case ErrorMessage<List<Task>>(message: final message, code: _):
+        log('Problems getting tasks: $message');
+    }
   }
   void addTask(Task task) {
     state = [...state, task];

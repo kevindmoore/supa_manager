@@ -6,7 +6,7 @@ part 'database_user.g.dart';
 
 /// Holds information about the currently logged in user
 @freezed
-class DatabaseUser with _$DatabaseUser {
+abstract class DatabaseUser with _$DatabaseUser {
   @JsonSerializable(explicitToJson: true)
   const factory DatabaseUser(
       {String? sessionId,

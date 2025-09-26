@@ -6,17 +6,19 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.17.6 <3.0.0"
+  sdk: '>=3.3.4 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   supa_manager:
     path: ../
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.2
   flutter_riverpod: ^2.4.5
-  json_annotation: ^4.8.1
-  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
+#  freezed_annotation: ^2.4.1
+  freezed_annotation: ^3.0.0
+
   go_router: ^12.1.1
 
 dev_dependencies:
@@ -25,7 +27,7 @@ dev_dependencies:
 
   flutter_lints: ^3.0.1
   build_runner: ^2.4.7
-  json_serializable: ^6.7.1
+  json_serializable: ^6.9.4
   freezed:   # the code generator
 #  riverpod_generator: ^2.3.5
 #  # riverpod_lint makes it easier to work with Riverpod

@@ -37,7 +37,7 @@ void main() async {
   final secrets = await SecretLoader(secretPath: 'assets/secrets.json').load();
   configuration = Configuration();
   await configuration.initialize(
-      secrets.url, secrets.apiKey, secrets.apiSecret);
+      secrets.url, secrets.apiKey, null);
   runApp(const ProviderScope(child: MyApp()));
 }
 

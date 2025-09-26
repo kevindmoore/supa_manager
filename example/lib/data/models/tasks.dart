@@ -12,8 +12,8 @@ List<Map<String, dynamic>> taskToDatabaseJson(Task task, String userId) {
 }
 
 @freezed
-class Task with _$Task {
-  @JsonSerializable(explicitToJson: true)
+abstract class Task with _$Task {
+  // @JsonSerializable(explicitToJson: true)
   factory Task({
     required String name,
     @JsonKey(includeIfNull: false)
