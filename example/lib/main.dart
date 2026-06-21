@@ -4,21 +4,24 @@ import 'package:supa_manager/supa_manager.dart';
 
 import 'router/routes.dart';
 import 'secret.dart';
+import 'ui/utils.dart';
 
 late Configuration configuration;
 final configurationProvider = Provider<Configuration>((ref) {
   return configuration;
 });
 
-final logInStateProvider =
-    Provider.family<LoginStateNotifier, Configuration>((ref, configuration) {
+final logInStateProvider = Provider.family<LoginStateNotifier, Configuration>((
+  ref,
+  configuration,
+) {
   return configuration.loginStateNotifier;
 });
 
 final supaBaseDatabaseProvider =
     Provider.family<SupaDatabaseManager, Configuration>((ref, configuration) {
-  return configuration.supaDatabaseRepository;
-});
+      return configuration.supaDatabaseRepository;
+    });
 
 LoginStateNotifier getLoginStateNotifier(Ref ref) {
   return ref.read(configurationProvider).loginStateNotifier;
@@ -36,8 +39,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final secrets = await SecretLoader(secretPath: 'assets/secrets.json').load();
   configuration = Configuration();
-  await configuration.initialize(
-      secrets.url, secrets.apiKey, null);
+  await configuration.initialize(secrets.url, secrets.apiKey, null);
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -71,7 +73,22 @@ class _MyAppState extends ConsumerState<MyApp> {
       debugShowCheckedModeBanner: false,
       title: 'Today',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: endGradientColor,
+          primary: endGradientColor,
+          secondary: actionColor,
+          surface: cardBackgroundColor,
+        ),
+        scaffoldBackgroundColor: appBackgroundColor,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: endGradientColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        cardTheme: const CardThemeData(
+          color: cardBackgroundColor,
+          surfaceTintColor: Colors.transparent,
+        ),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
     );

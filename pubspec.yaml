@@ -1,7 +1,6 @@
 name: supa_manager
 description: This package makes it easy to use the supabase database. It provides generic methods for performing CRUD operations (Create, Read, Update and Delete).
-publish_to:
-version: 1.0.2
+version: 1.0.3
 repository: https://github.com/kevindmoore/supa_manager
 homepage: https://github.com/kevindmoore/supa_manager
 

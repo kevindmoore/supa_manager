@@ -4,7 +4,7 @@ import 'package:supa_manager/supa_manager.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// In order to initialize the database you need the following:
-/// * The url to your supabase instance. This will be in the format of https://<some long set of characters>.supabase.co
+/// * The url to your supabase instance. This will be in the format of https:// some long set of characters.supabase.co
 /// * The Api Key. This will be a very, very long string of characters from the supabase website
 /// * The Api Secret. This will be a very, very long string of characters from the supabase website
 /// Make sure you call initialize or supaBaseAuthProvider will fail. Do this in your main function
@@ -36,7 +36,7 @@ class Configuration {
     try {
       supabaseInstance = await Supabase.initialize(
         url: url,
-        anonKey: apiKey,
+        publishableKey: apiKey,
         debug: false,
       );
     } on Exception catch (error) {

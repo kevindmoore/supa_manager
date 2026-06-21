@@ -20,7 +20,7 @@ class MyRouter {
 
   late final router = GoRouter(
     refreshListenable: loginState,
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: false,
     routes: [
       GoRoute(
         name: rootRouteName,

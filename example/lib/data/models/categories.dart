@@ -1,9 +1,7 @@
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'categories.freezed.dart';
 part 'categories.g.dart';
-
 
 List<Map<String, dynamic>> categoryToDatabaseJson(
     Category category, String userId) {
@@ -15,13 +13,10 @@ List<Map<String, dynamic>> categoryToDatabaseJson(
 
 @freezed
 abstract class Category with _$Category {
-  // @JsonSerializable(explicitToJson: true)
   factory Category({
     required String name,
-    @JsonKey(includeIfNull: false)
-    int? id,
-    @JsonKey(includeIfNull: false)
-    String? userId,
+    @JsonKey(includeIfNull: false) int? id,
+    @JsonKey(name: 'user_id', includeIfNull: false) String? userId,
   }) = _Category;
 
   factory Category.fromJson(Map<String, dynamic> json) =>

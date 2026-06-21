@@ -1,4 +1,3 @@
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'tasks.freezed.dart';
@@ -13,19 +12,14 @@ List<Map<String, dynamic>> taskToDatabaseJson(Task task, String userId) {
 
 @freezed
 abstract class Task with _$Task {
-  // @JsonSerializable(explicitToJson: true)
   factory Task({
     required String name,
-    @JsonKey(includeIfNull: false)
-    int? id,
-    @JsonKey(includeIfNull: false)
-    String? userId,
+    @JsonKey(includeIfNull: false) int? id,
+    @JsonKey(name: 'user_id', includeIfNull: false) String? userId,
     @Default(false) bool done,
-    @Default(false) bool doLater,
-    @JsonKey(includeIfNull: false)
-    int? categoryId,
+    @JsonKey(name: 'do_later') @Default(false) bool doLater,
+    @JsonKey(name: 'category_id', includeIfNull: false) int? categoryId,
   }) = _Task;
 
-  factory Task.fromJson(Map<String, dynamic> json) =>
-      _$TaskFromJson(json);
+  factory Task.fromJson(Map<String, dynamic> json) => _$TaskFromJson(json);
 }

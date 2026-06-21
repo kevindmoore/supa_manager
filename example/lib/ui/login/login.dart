@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supa_manager/supa_manager.dart';
 
 import '../../main.dart';
+import '../../router/route_names.dart';
 import '../utils.dart';
 
 typedef VisibilityButtonPressed = void Function(bool);
@@ -21,6 +24,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
   var useLoginScreen = true;
   var hideFirstPassword = true;
   var hideSecondPassword = true;
+  var loggingIn = false;
 
   @override
   void initState() {
@@ -41,15 +45,16 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: appBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Center(
           child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: useLoginScreen
-                  ? createLoginScreen()
-                  : createCreateAccountScreen()),
+            padding: const EdgeInsets.all(16.0),
+            child: useLoginScreen
+                ? createLoginScreen()
+                : createCreateAccountScreen(),
+          ),
           // ),
         ),
       ),
@@ -64,61 +69,47 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
       children: [
         const Padding(
           padding: EdgeInsets.only(left: 0.0, top: 10.0, bottom: 32.0),
-          child: Text(
-            'Login',
-          ),
+          child: Text('Login'),
         ),
-        const SizedBox(
-          height: 16,
-        ),
+        const SizedBox(height: 16),
         const Padding(
           padding: EdgeInsets.only(left: 0.0, top: 10.0, bottom: 12.0),
-          child: Text(
-            'Email',
-          ),
+          child: Text('Email'),
         ),
         createEmailField(),
         const Padding(
           padding: EdgeInsets.only(left: 0.0, top: 10.0, bottom: 12.0),
-          child: Text(
-            'Password',
-          ),
+          child: Text('Password'),
         ),
-        createPasswordField(passwordTextController, hideFirstPassword,
-            toggleFirstPasswordVisibility),
+        createPasswordField(
+          passwordTextController,
+          hideFirstPassword,
+          toggleFirstPasswordVisibility,
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Checkbox(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4)),
+                borderRadius: BorderRadius.circular(4),
+              ),
               value: rememberMe,
               activeColor: Colors.blue,
               checkColor: Colors.white,
               onChanged: (value) {
-                setState(
-                  () {
-                    if (value != null) {
-                      rememberMe = value;
-                    }
-                  },
-                );
+                setState(() {
+                  if (value != null) {
+                    rememberMe = value;
+                  }
+                });
               },
             ),
-            const Text(
-              'Remember me',
-            ),
-            const SizedBox(
-              width: 20,
-            ),
-            const Text(
-              'Forgot password?',
-            ),
+            const Text('Remember me'),
+            const SizedBox(width: 20),
+            const Text('Forgot password?'),
           ],
         ),
-        const SizedBox(
-          height: 16,
-        ),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -126,41 +117,35 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(
-                        horizontal: 32.0, vertical: 20.0),
+                    backgroundColor: endGradientColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32.0,
+                      vertical: 20.0,
+                    ),
                     elevation: 0,
                   ),
-                  onPressed: () async {
-                    if (emailTextController.text.isNotEmpty &&
-                        passwordTextController.text.isNotEmpty) {
-
-                      final auth = getSupaAuthManager(ref);
-                      final response = await auth.login(
-                          emailTextController.text,
-                          passwordTextController.text);
-                      if (response is String) {
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(content: Text(response as String)));
-                      }
-
-                    }
-                  },
-                  child: const Text('Login'),
+                  onPressed: loggingIn ? null : login,
+                  child: loggingIn
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Login'),
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(
-          height: 8,
-        ),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Not registered yet?',
-            ),
+            const Text('Not registered yet?'),
             TextButton(
               onPressed: () {
                 setState(() {
@@ -171,9 +156,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
             ),
           ],
         ),
-        const SizedBox(
-          height: 16,
-        ),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -184,6 +167,33 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
 
   void toggleSecondPasswordVisibility(bool visible) {
     hideSecondPassword = visible;
+  }
+
+  Future<void> login() async {
+    final email = emailTextController.text.trim();
+    final password = passwordTextController.text;
+    if (email.isEmpty || password.isEmpty) {
+      showSnackBar(context, 'Email and password are required');
+      return;
+    }
+
+    setState(() {
+      loggingIn = true;
+    });
+    final auth = getSupaAuthManager(ref);
+    final response = await auth.login(email, password);
+    if (!mounted) return;
+    setState(() {
+      loggingIn = false;
+    });
+    switch (response) {
+      case Success<DatabaseUser>():
+        context.goNamed(homeRouteName);
+      case Failure<DatabaseUser>():
+        showSnackBar(context, response.error.toString());
+      case ErrorMessage<DatabaseUser>():
+        showSnackBar(context, response.message ?? 'Problems logging in');
+    }
   }
 
   Widget createCreateAccountScreen() {
@@ -197,66 +207,68 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
           child: Row(
             children: [
               IconButton(
-                  onPressed: () {
-                    setState(() {
-                      useLoginScreen = true;
-                    });
-                  },
-                  icon: const Icon(Icons.chevron_left)),
+                onPressed: () {
+                  setState(() {
+                    useLoginScreen = true;
+                  });
+                },
+                icon: const Icon(Icons.chevron_left),
+              ),
               TextButton(
-                  style: ButtonStyle(
-                      foregroundColor:
-                          WidgetStateProperty.all<Color>(Colors.black)),
-                  onPressed: () {
-                    setState(() {
-                      useLoginScreen = true;
-                    });
-                  },
-                  child: const Text(
-                    'Create an account',
-                  )),
+                style: ButtonStyle(
+                  foregroundColor: WidgetStateProperty.all<Color>(Colors.black),
+                ),
+                onPressed: () {
+                  setState(() {
+                    useLoginScreen = true;
+                  });
+                },
+                child: const Text('Create an account'),
+              ),
             ],
           ),
         ),
         const Padding(
           padding: EdgeInsets.only(left: 0.0, top: 10.0, bottom: 12.0),
-          child: Text(
-            'Email',
-          ),
+          child: Text('Email'),
         ),
         createEmailField(),
         const Padding(
           padding: EdgeInsets.only(left: 0.0, top: 10.0, bottom: 12.0),
-          child: Text(
-            'Password',
-          ),
+          child: Text('Password'),
         ),
-        createPasswordField(passwordTextController, hideFirstPassword,
-            toggleFirstPasswordVisibility),
-        const SizedBox(
-          height: 16,
+        createPasswordField(
+          passwordTextController,
+          hideFirstPassword,
+          toggleFirstPasswordVisibility,
         ),
+        const SizedBox(height: 16),
         const Padding(
           padding: EdgeInsets.only(left: 0.0, top: 0.0, bottom: 12.0),
-          child: Text(
-            'Repeat Password',
-          ),
+          child: Text('Repeat Password'),
         ),
-        createPasswordField(repeatPasswordTextController, hideSecondPassword,
-            toggleSecondPasswordVisibility),
-        const SizedBox(
-          height: 16,
+        createPasswordField(
+          repeatPasswordTextController,
+          hideSecondPassword,
+          toggleSecondPasswordVisibility,
         ),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(
-                    left: 8.0, top: 10.0, bottom: 12.0, right: 8.0),
+                  left: 8.0,
+                  top: 10.0,
+                  bottom: 12.0,
+                  right: 8.0,
+                ),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 32.0, vertical: 20.0),
+                      horizontal: 32.0,
+                      vertical: 20.0,
+                    ),
                     elevation: 0,
                   ),
                   onPressed: () async {
@@ -284,15 +296,16 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
             ),
           ],
         ),
-        const SizedBox(
-          height: 16,
-        ),
+        const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget createPasswordField(TextEditingController controller, bool showText,
-      VisibilityButtonPressed buttonPressed) {
+  Widget createPasswordField(
+    TextEditingController controller,
+    bool showText,
+    VisibilityButtonPressed buttonPressed,
+  ) {
     return Row(
       children: [
         Expanded(
@@ -319,7 +332,7 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
               ),
             ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -341,7 +354,8 @@ class _LoginDialogState extends ConsumerState<LoginDialog> {
   }
 
   void showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

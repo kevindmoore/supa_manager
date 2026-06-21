@@ -251,6 +251,7 @@ class SupaAuthManager {
   /// Logout the current user
   void logout() async {
     try {
+      _authSubscription?.cancel();
       await client.auth.signOut();
     } catch (e) {
       logError(e);

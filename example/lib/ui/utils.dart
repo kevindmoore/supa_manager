@@ -2,19 +2,28 @@ import 'package:flutter/material.dart';
 
 const startGradientColor = Color(0xFF2C93F1);
 const endGradientColor = Color(0xFF1465AE);
+const appBackgroundColor = Color(0xFFEFF6FD);
+const cardBackgroundColor = Color(0xFFFFFFFF);
+const actionColor = Color(0xFFF59E0B);
 const textColor = Colors.white;
 const inverseTextColor = Colors.black;
 const blackBorderColor = Color(0xFF353535);
-const dividerColor = Color(0xFFE4E4E4);
+const dividerColor = Color(0xFFB7D8F4);
 const lightBlueColor = Color(0xFF524FEC);
 const lightGreyColor = Color(0xFF797979);
 
 const titleBlackText = TextStyle(fontSize: 24, fontWeight: FontWeight.w600);
 const titleText = TextStyle(
-    fontSize: 36, fontWeight: FontWeight.w600, color: blackBorderColor);
+  fontSize: 36,
+  fontWeight: FontWeight.w600,
+  color: blackBorderColor,
+);
 const largeBlackText = TextStyle(fontSize: 16, fontWeight: FontWeight.w600);
-const largeWhiteText =
-    TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white);
+const largeWhiteText = TextStyle(
+  fontSize: 16,
+  fontWeight: FontWeight.w600,
+  color: Colors.white,
+);
 const smallBlackText = TextStyle(
   fontSize: 12,
   fontWeight: FontWeight.w600,
@@ -29,9 +38,10 @@ const smallBlueText = TextStyle(
 BoxDecoration createGradient() {
   return const BoxDecoration(
     gradient: LinearGradient(
-        begin: Alignment.bottomRight,
-        end: Alignment.topLeft,
-        colors: [startGradientColor, endGradientColor]),
+      begin: Alignment.bottomRight,
+      end: Alignment.topLeft,
+      colors: [startGradientColor, endGradientColor],
+    ),
   );
 }
 
@@ -49,14 +59,16 @@ BoxDecoration createSimiRoundedBorder() {
 
 BoxDecoration createWhiteBorder() {
   return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16.0),
-      boxShadow: [
-        BoxShadow(
-            blurRadius: 16.0,
-            offset: const Offset(0.0, 4.0),
-            color: Colors.black.withAlpha(25))
-      ]);
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16.0),
+    boxShadow: [
+      BoxShadow(
+        blurRadius: 16.0,
+        offset: const Offset(0.0, 4.0),
+        color: Colors.black.withAlpha(25),
+      ),
+    ],
+  );
 }
 
 BoxDecoration createBlackBorderedBox() {
@@ -76,14 +88,12 @@ RoundedRectangleBorder createWhiteRoundedBorder() {
 
 InputDecoration createTextBorder(String hint, IconButton? endingButton) {
   return InputDecoration(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: const BorderSide(
-          width: 1,
-          style: BorderStyle.solid,
-        ),
-      ),
-      hintText: hint,
-      hintStyle: const TextStyle(color: Colors.grey),
-      suffixIcon: endingButton);
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(20),
+      borderSide: const BorderSide(width: 1, style: BorderStyle.solid),
+    ),
+    hintText: hint,
+    hintStyle: const TextStyle(color: Colors.grey),
+    suffixIcon: endingButton,
+  );
 }

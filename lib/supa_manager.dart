@@ -1,5 +1,5 @@
 /// Contains code to manage supabase databases.
-library supa_manager;
+library;
 
 export 'src/configuration.dart';
 export 'src/auth/supabase_auth.dart';

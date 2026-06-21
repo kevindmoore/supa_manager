@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/tasks_notifier.dart';
 import '../tasks/task_card.dart';
+import '../utils.dart';
 
 class Done extends ConsumerStatefulWidget {
   const Done({super.key});
@@ -12,11 +13,10 @@ class Done extends ConsumerStatefulWidget {
 }
 
 class _DoneState extends ConsumerState<Done> {
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(color: Colors.white),
+      decoration: const BoxDecoration(color: appBackgroundColor),
       child: getTasks(),
     );
   }
@@ -25,18 +25,20 @@ class _DoneState extends ConsumerState<Done> {
     final tasks = ref.watch(taskNotifierProvider);
     final taskNotifier = ref.read(taskNotifierProvider.notifier);
     final doneTasks = taskNotifier.filterDoneTasks(tasks);
+    if (doneTasks.isEmpty) {
+      return const Center(child: Text('No done tasks yet'));
+    }
     return ListView.builder(
+      padding: const EdgeInsets.all(12),
       itemCount: doneTasks.length,
       itemBuilder: (BuildContext context, int index) {
         return TaskCard(
           key: ValueKey(doneTasks[index].id),
           task: doneTasks[index],
           onChanged: (task) {
-            setState(
-              () {
-                taskNotifier.replaceTask(task);
-              },
-            );
+            setState(() {
+              taskNotifier.replaceTask(task);
+            });
           },
           onDeleted: (task) {
             setState(() {});
@@ -46,5 +48,4 @@ class _DoneState extends ConsumerState<Done> {
       },
     );
   }
-
 }

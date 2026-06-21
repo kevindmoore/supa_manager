@@ -6,6 +6,7 @@ import 'categories/category_list.dart';
 import 'dolater/do_later.dart';
 import 'done/done.dart';
 import 'tasks/tasks.dart';
+import 'utils.dart';
 
 const tasks = 'Tasks';
 const done = 'Done';
@@ -51,16 +52,23 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     }
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.blue,
+        backgroundColor: endGradientColor,
+        type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor: const Color(0xFFBFDDF6),
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.task), label: tasks),
           BottomNavigationBarItem(icon: Icon(Icons.done), label: done),
           BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_late), label: doLater),
-          // BottomNavigationBarItem(
-          //     icon: Icon(Icons.category), label: categories),
+            icon: Icon(Icons.assignment_late),
+            label: doLater,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.category),
+            label: categories,
+          ),
         ],
         currentIndex: _selectedIndex,
         onTap: (index) {
@@ -72,10 +80,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       appBar: getAppBar(title),
       body: Padding(
         padding: const EdgeInsets.only(bottom: 2.0),
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: pageList,
-        ),
+        child: IndexedStack(index: _selectedIndex, children: pageList),
       ),
     );
   }
@@ -86,19 +91,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     // }
     return AppBar(
       elevation: 0,
-      backgroundColor: Colors.white,
+      backgroundColor: endGradientColor,
+      foregroundColor: Colors.white,
       actions: [
         TextButton(
-            onPressed: () async {
-              final auth = getSupaAuthManager(ref);
-              auth.logout();
-            },
-            child: const Text('Log Out')),
+          onPressed: () async {
+            final auth = getSupaAuthManager(ref);
+            auth.logout();
+          },
+          child: const Text('Log Out', style: TextStyle(color: Colors.white)),
+        ),
       ],
       title: Text(
         title,
-        style: const TextStyle(
-            fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
       ),
     );
   }

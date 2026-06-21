@@ -15,7 +15,7 @@ class TaskCard extends ConsumerStatefulWidget {
   final OnChanged? onChanged;
   final OnDeleted? onDeleted;
 
-  TaskCard({super.key, required this.task, this.onChanged, this.onDeleted, });
+  TaskCard({super.key, required this.task, this.onChanged, this.onDeleted});
 
   @override
   ConsumerState createState() => _TaskCardState();
@@ -30,76 +30,75 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   Widget buildRow() {
     final repository = ref.watch(repositoryProvider);
     return Card(
-      color: startGradientColor,
-      elevation: 4.0,
+      color: cardBackgroundColor,
+      elevation: 1.0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(8.0),
+        side: const BorderSide(color: dividerColor),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.task.name,
-                  style: largeBlackText,
-                ),
-                const SizedBox(
-                  height: 8,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Checkbox(
-                      value: widget.task.done,
-                      onChanged: (changed) async {
-                        setState(
-                          () {
-                            widget.task = widget.task.copyWith(
-                                done: !(true == widget.task.done),
-                                doLater: false);
-                          },
-                        );
-                        updateTask(widget.task, repository);
-                      },
-                    ),
-                    const Text('Done'),
-                    const SizedBox(
-                      width: 8,
-                    ),
-                    Checkbox(
-                      value: widget.task.doLater,
-                      onChanged: (changed) async {
-                        setState(
-                          () {
-                            widget.task = widget.task.copyWith(
-                                doLater: !(true == widget.task.doLater),
-                                done: false);
-                          },
-                        );
-                        updateTask(widget.task, repository);
-                      },
-                    ),
-                    const Text('Do Later'),
-                    const SizedBox(
-                      width: 8,
-                    ),
-                  ],
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.task.name, style: largeBlackText),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Checkbox(
+                            value: widget.task.done,
+                            onChanged: (changed) async {
+                              setState(() {
+                                widget.task = widget.task.copyWith(
+                                  done: !(true == widget.task.done),
+                                  doLater: false,
+                                );
+                              });
+                              updateTask(widget.task, repository);
+                            },
+                          ),
+                          const Text('Done'),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Checkbox(
+                            value: widget.task.doLater,
+                            onChanged: (changed) async {
+                              setState(() {
+                                widget.task = widget.task.copyWith(
+                                  doLater: !(true == widget.task.doLater),
+                                  done: false,
+                                );
+                              });
+                              updateTask(widget.task, repository);
+                            },
+                          ),
+                          const Text('Do Later'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
             IconButton(
-                onPressed: () async {
-                  await repository.deleteTask(widget.task);
-                  widget.onDeleted?.call(widget.task);
-                },
-                icon: const Icon(
-                  Icons.delete,
-                  color: Colors.red,
-                )),
+              onPressed: () async {
+                await repository.deleteTask(widget.task);
+                widget.onDeleted?.call(widget.task);
+              },
+              icon: const Icon(Icons.delete, color: Colors.red),
+            ),
           ],
         ),
       ),
@@ -112,11 +111,15 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       case Success(data: final updatedTask):
         widget.task = updatedTask!;
       case Failure(error: final error):
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       case ErrorMessage(message: final message, code: _):
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message ?? 'Problems getting data')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message ?? 'Problems getting data')),
+        );
     }
     widget.onChanged?.call(task);
   }

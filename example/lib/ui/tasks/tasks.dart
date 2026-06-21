@@ -28,7 +28,7 @@ class _TasksState extends ConsumerState<Tasks> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(color: Colors.white),
+      decoration: const BoxDecoration(color: appBackgroundColor),
       child: Stack(
         children: [
           getTasks(),
@@ -38,20 +38,12 @@ class _TasksState extends ConsumerState<Tasks> {
             child: FloatingActionButton(
               heroTag: UniqueKey(),
               key: UniqueKey(),
-              backgroundColor: startGradientColor,
-              child: const Icon(
-                Icons.add,
-                color: Colors.black,
-              ),
+              backgroundColor: actionColor,
+              child: const Icon(Icons.add, color: Colors.black),
               onPressed: () {
                 showNewDialog('New Task', (String? name) async {
                   if (name != null) {
-                    final task = await addTask(name);
-                    if (task != null) {
-                      setState(() {
-                        ref.read(taskNotifierProvider.notifier).addTask(task);
-                      });
-                    }
+                    await addTask(name);
                   }
                 });
               },
@@ -64,25 +56,25 @@ class _TasksState extends ConsumerState<Tasks> {
 
   Future<Task?> addTask(String name) async {
     final repository = ref.read(repositoryProvider);
-    final result =
-        await repository.addTask(Task(name: name, done: false, doLater: false));
+    final result = await repository.addTask(
+      Task(name: name, done: false, doLater: false),
+    );
     switch (result) {
       case Success(data: final task):
         ref.read(taskNotifierProvider.notifier).addTask(task!);
         return task;
       case Failure(error: final error):
         debugPrint('addTask: $error');
-        if (context.mounted) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(error.toString())));
-        }
+        if (!mounted) return null;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       case ErrorMessage(message: final message, code: _):
         debugPrint('addTask: $message');
-        if (context.mounted) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
-              SnackBar(content: Text(message ?? 'Problems getting data')));
-        }
+        if (!mounted) return null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message ?? 'Problems getting data')),
+        );
     }
     return null;
   }
@@ -90,10 +82,7 @@ class _TasksState extends ConsumerState<Tasks> {
   void showNewDialog(String title, NameCallBack callBack) {
     showDialog(
       context: context,
-      builder: (context) => NewItemDialog(
-        title: title,
-        callBack: callBack,
-      ),
+      builder: (context) => NewItemDialog(title: title, callBack: callBack),
     );
   }
 
@@ -102,8 +91,12 @@ class _TasksState extends ConsumerState<Tasks> {
     final tasks = ref.watch(taskNotifierProvider);
     final taskNotifier = ref.read(taskNotifierProvider.notifier);
     final todaysTasks = taskNotifier.filterTodayTasks(tasks);
+    if (todaysTasks.isEmpty) {
+      return const Center(child: Text('No tasks yet'));
+    }
     return ListView.builder(
       key: _listKey,
+      padding: const EdgeInsets.all(12),
       itemCount: todaysTasks.length,
       itemBuilder: (BuildContext context, int index) {
         return TaskCard(

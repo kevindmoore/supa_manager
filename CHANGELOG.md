@@ -1,3 +1,7 @@
+## 1.0.3
+* Update Supabase initialization to use publishableKey.
+* Update the example app dependencies and iOS Swift Package Manager integration.
+
 ## 1.0.2
 * Fix issues for latest version. Remove API secret as it was not needed
 ## 1.0.1
@@ -31,7 +35,6 @@
 
 ## 1.0.0-dev.1
 * First release.
-
 
 
 

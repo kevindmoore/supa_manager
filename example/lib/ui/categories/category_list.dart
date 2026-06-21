@@ -20,7 +20,7 @@ class _CategoriesState extends ConsumerState<Categories> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(color: Colors.white),
+      decoration: const BoxDecoration(color: appBackgroundColor),
       child: Stack(
         children: [
           getCategories(),
@@ -30,11 +30,8 @@ class _CategoriesState extends ConsumerState<Categories> {
             child: FloatingActionButton(
               heroTag: UniqueKey(),
               key: UniqueKey(),
-              backgroundColor: startGradientColor,
-              child: const Icon(
-                Icons.add,
-                color: Colors.black,
-              ),
+              backgroundColor: actionColor,
+              child: const Icon(Icons.add, color: Colors.black),
               onPressed: () {
                 showNewDialog('New Category', (String? name) async {
                   if (name != null) {
@@ -55,10 +52,7 @@ class _CategoriesState extends ConsumerState<Categories> {
   void showNewDialog(String title, NameCallBack callBack) {
     showDialog(
       context: context,
-      builder: (context) => NewItemDialog(
-        title: title,
-        callBack: callBack,
-      ),
+      builder: (context) => NewItemDialog(title: title, callBack: callBack),
     );
   }
 
@@ -66,8 +60,15 @@ class _CategoriesState extends ConsumerState<Categories> {
     return FutureBuilder<List<Category>>(
       future: getCategoryData(),
       builder: (context, AsyncSnapshot<List<Category>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
         final categories = snapshot.data ?? <Category>[];
+        if (categories.isEmpty) {
+          return const Center(child: Text('No categories yet'));
+        }
         return ListView.builder(
+          padding: const EdgeInsets.all(12),
           itemCount: categories.length,
           itemBuilder: (BuildContext context, int index) {
             return buildCategoryRow(categories[index]);
@@ -85,12 +86,16 @@ class _CategoriesState extends ConsumerState<Categories> {
         return data;
       case Failure(error: final error):
         log('Problems getting categories', error: error);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
+        if (!mounted) return <Category>[];
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       case ErrorMessage(message: final message, code: _):
         log('Problems getting categories: $message');
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message ?? 'Problems getting data')));
+        if (!mounted) return <Category>[];
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message ?? 'Problems getting data')),
+        );
     }
     return <Category>[];
   }
@@ -98,29 +103,24 @@ class _CategoriesState extends ConsumerState<Categories> {
   Widget buildCategoryRow(Category category) {
     final repository = ref.watch(repositoryProvider);
     return Card(
-      color: startGradientColor,
-      elevation: 4.0,
+      color: cardBackgroundColor,
+      elevation: 1.0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(8.0),
+        side: const BorderSide(color: dividerColor),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         child: Row(
           children: [
-            Text(
-              category.name,
-              style: largeWhiteText,
-            ),
-            const Spacer(),
+            Expanded(child: Text(category.name, style: largeBlackText)),
             IconButton(
-                onPressed: () async {
-                  await repository.deleteCategory(category);
-                  setState(() {});
-                },
-                icon: const Icon(
-                  Icons.delete,
-                  color: Colors.red,
-                )),
+              onPressed: () async {
+                await repository.deleteCategory(category);
+                setState(() {});
+              },
+              icon: const Icon(Icons.delete, color: Colors.red),
+            ),
           ],
         ),
       ),

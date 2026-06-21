@@ -55,8 +55,9 @@ The **Result** class returns `Result.success`, `Result.failure` or `Result.error
 
 ### Database
 
-In order to use the database you have to first create the tables in supabase. Since this package assumes that you have your tables based on userId's, you'll 
-need to add a `userId` field in each table. This will be of type `uuid`. Then you will need to create
+In order to use the database you have to first create the tables in supabase. You can run `supabase_schema.sql`
+from this example in the Supabase SQL editor. Since this package assumes that you have your tables based on user ids, you'll
+need to add a `user_id` field in each table. This will be of type `uuid`. Then you will need to create
 two classes for each table:  One based on `TableData` which gives the table name and a `fromJson` method to convert JSON data to your class.
 The second table is based on `TableEntry`. This class provides a `toJson`, id and a `addUserId` method to create a copy of your class
 with the userId set.
