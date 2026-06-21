@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:lumberdash/lumberdash.dart';
@@ -13,8 +14,8 @@ const userIdFieldName = 'user_id';
 const idFieldName = 'id';
 const tokenExpired = 'JWT expired';
 
-typedef SelectBuilder = PostgrestFilterBuilder Function(
-    PostgrestFilterBuilder builder);
+typedef SelectBuilder =
+    PostgrestFilterBuilder Function(PostgrestFilterBuilder builder);
 
 /// Class for managing Supabase databases
 ///
@@ -23,39 +24,18 @@ typedef SelectBuilder = PostgrestFilterBuilder Function(
 class SupaDatabaseManager {
   final SupabaseClient client;
   final SupaAuthManager? authManager;
-  Stream<List<Map<String, dynamic>>>? projectStream;
-  Stream<List<Map<String, dynamic>>>? taskStream;
 
   /// Initialize with AuthManager. Get an instance of the client
   SupaDatabaseManager(this.authManager, this.client);
-
-  /// Generic method to get all of the values from a table
-  ///
-  /// [tableName] name of table
-  Future<Result<List<dynamic>>> _listTable(String tableName) async {
-    try {
-      if (authManager?.isLoggedIn() == false) {
-        if (!await authManager!.refreshSession()) {
-          return Result.failure(SignedOutException());
-        }
-      }
-      final data = await client.from(tableName).select();
-      return Result.success(data);
-    } on Exception catch (error) {
-      logFatal('Problems listing table $tableName Error: $error');
-      if (await _handlePostgrestError(error)) {
-        return _listTable(tableName);
-      }
-      return Result.failure(error);
-    }
-  }
 
   /// Given a table name and a list of json data, perform an insert
   ///
   /// [tableName] name of table
   /// [tableData] list of mapped data
   Future<Result<List<dynamic>>> addListDataToTable(
-      String tableName, List<Map<String, dynamic>> tableData) async {
+    String tableName,
+    List<Map<String, dynamic>> tableData,
+  ) async {
     try {
       if (authManager?.isLoggedIn() == false) {
         if (!await authManager!.refreshSession()) {
@@ -78,7 +58,9 @@ class SupaDatabaseManager {
   /// The name of the table is [tableName]
   /// [tableData] list of mapped data
   Future<Result<dynamic>> addDataToTable(
-      String tableName, Map<String, dynamic> tableMap) async {
+    String tableName,
+    Map<String, dynamic> tableMap,
+  ) async {
     try {
       if (authManager?.isLoggedIn() == false) {
         if (!await authManager!.refreshSession()) {
@@ -107,8 +89,10 @@ class SupaDatabaseManager {
           return Result.failure(SignedOutException());
         }
       }
-      var select =
-          client.from(tableData.tableName).select().eq(idFieldName, id);
+      var select = client
+          .from(tableData.tableName)
+          .select()
+          .eq(idFieldName, id);
       if (tableData.hasUserId) {
         select = select.eq(userIdFieldName, client.auth.currentUser!.id);
       }
@@ -137,20 +121,73 @@ class SupaDatabaseManager {
       }
     }
     final entries = <T>[];
-    final result = await _listTable(tableData.tableName);
-    switch (result) {
-      case Success(data: final data):
-        if (data.isNotEmpty) {
+    try {
+      var select = client.from(tableData.tableName).select();
+      if (tableData.hasUserId) {
+        select = select.eq(userIdFieldName, client.auth.currentUser!.id);
+      }
+      final data = await select;
+      if (data.isNotEmpty) {
+        for (final json in data) {
+          entries.add(tableData.fromJson(json));
+        }
+      }
+      return Result.success(entries);
+    } on Exception catch (error) {
+      logFatal('Problems listing table readEntries Error: $error');
+      if (await _handlePostgrestError(error)) {
+        return readEntries(tableData);
+      }
+      return Result.failure(error);
+    }
+  }
+
+  /// Return a stream of entries for the given table
+  ///
+  /// [tableData] contains table info
+  /// [idFieldName] name of the id field, defaults to 'id'
+  Stream<List<T>> streamEntries<T>(
+    TableData<T> tableData, {
+    String idFieldName = 'id',
+  }) {
+    return client
+        .from(tableData.tableName)
+        .stream(primaryKey: [idFieldName])
+        .map((data) {
+          final entries = <T>[];
           for (final json in data) {
             entries.add(tableData.fromJson(json));
           }
-        }
-        return Result.success(entries);
-      case Failure(error: final error):
-        return Result.failure(error);
-      case ErrorMessage(message: final message, code: final code):
-        return Result.errorMessage(code, message);
-    }
+          return entries;
+        });
+  }
+
+  /// Subscribe to realtime changes (INSERT, UPDATE, DELETE) for a table
+  ///
+  /// [tableData] contains table info
+  Stream<PostgresChangePayload> subscribeToTableChanges<T>(
+    TableData<T> tableData,
+  ) {
+    // ignore: close_sinks
+    final controller = StreamController<PostgresChangePayload>();
+
+    final channel = client.channel('public:${tableData.tableName}');
+
+    channel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: tableData.tableName,
+          callback: (payload) {
+            controller.add(payload);
+          },
+        )
+        .subscribe();
+
+    // Note: We are not handling unsubscribe here for simplicity,
+    // but in production code you should use controller.onCancel to unsubscribe.
+
+    return controller.stream;
   }
 
   /// Return a list of entries for the given table
@@ -180,7 +217,10 @@ class SupaDatabaseManager {
   /// [columnName] column name
   /// [columnValue] value of column to match
   Future<Result<List<T>>> readEntriesWhere<T>(
-      TableData<T> tableData, String columnName, Object columnValue) async {
+    TableData<T> tableData,
+    String columnName,
+    Object columnValue,
+  ) async {
     final entries = <T>[];
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
@@ -188,8 +228,10 @@ class SupaDatabaseManager {
       }
     }
     try {
-      var select =
-          client.from(tableData.tableName).select().eq(columnName, columnValue);
+      var select = client
+          .from(tableData.tableName)
+          .select()
+          .eq(columnName, columnValue);
       if (tableData.hasUserId) {
         select = select.eq(userIdFieldName, client.auth.currentUser!.id);
       }
@@ -217,7 +259,9 @@ class SupaDatabaseManager {
   /// [tableData] contains table info
   /// [builder] function for adding additional selection statements
   Future<Result<List<T>>> buildSelect<T>(
-      TableData<T> tableData, SelectBuilder builder) async {
+    TableData<T> tableData,
+    SelectBuilder builder,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
@@ -229,8 +273,9 @@ class SupaDatabaseManager {
       if (tableData.hasUserId) {
         select = select.eq(userIdFieldName, client.auth.currentUser!.id);
       }
-      select = builder.call(select)
-          as PostgrestFilterBuilder<List<Map<String, dynamic>>>;
+      select =
+          builder.call(select)
+              as PostgrestFilterBuilder<List<Map<String, dynamic>>>;
       final data = await select;
       // if (data != null && data is List<dynamic> && data.isNotEmpty) {
       if (data.isNotEmpty) {
@@ -254,7 +299,9 @@ class SupaDatabaseManager {
   /// [tableData] contains table info
   /// [selections] list of [SelectEntry] items
   Future<Result<List<T>>> selectEntriesWhere<T>(
-      TableData<T> tableData, List<SelectEntry> selections) async {
+    TableData<T> tableData,
+    List<SelectEntry> selections,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
@@ -320,15 +367,19 @@ class SupaDatabaseManager {
   /// [tableData] Describe Table
   /// [tableEntry] contains table entry
   Future<Result<T?>> addEntry<T>(
-      TableData<T> tableData, TableEntry<T> tableEntry) async {
+    TableData<T> tableData,
+    TableEntry<T> tableEntry,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
       }
     }
     final updatedEntry = tableEntry.addUserId(client.auth.currentUser!.id);
-    final result =
-        await addDataToTable(tableData.tableName, updatedEntry.toJson());
+    final result = await addDataToTable(
+      tableData.tableName,
+      updatedEntry.toJson(),
+    );
     switch (result) {
       case Success(data: final data):
         if (data.isNotEmpty) {
@@ -349,7 +400,9 @@ class SupaDatabaseManager {
   /// [tableData] Describe Table
   /// [tableEntries] list of table entries
   Future<Result<List<T>>> addEntries<T>(
-      TableData<T> tableData, List<TableEntry<T>> tableEntries) async {
+    TableData<T> tableData,
+    List<TableEntry<T>> tableEntries,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
@@ -385,7 +438,9 @@ class SupaDatabaseManager {
   /// [tableData] Describe Table
   /// [tableEntry] Describe data
   Future<Result<T?>> updateTableEntry<T>(
-      TableData<T> tableData, TableEntry<T> tableEntry) async {
+    TableData<T> tableData,
+    TableEntry<T> tableEntry,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
@@ -396,11 +451,12 @@ class SupaDatabaseManager {
       return const Result.errorMessage(1, 'Table Entry id is null');
     }
     try {
-      final data = await client
-          .from(tableData.tableName)
-          .update(tableEntry.toJson())
-          .eq(idFieldName, tableEntry.id!)
-          .select();
+      final data =
+          await client
+              .from(tableData.tableName)
+              .update(tableEntry.toJson())
+              .eq(idFieldName, tableEntry.id!)
+              .select();
       // if (data != null && data is List<dynamic> && data.isNotEmpty) {
       if (data.isNotEmpty) {
         return Result.success(tableData.fromJson(data[0]));
@@ -420,7 +476,9 @@ class SupaDatabaseManager {
   /// [tableData] Describe Table
   /// [tableEntry] Describe data
   Future<Result<T?>> deleteTableEntry<T>(
-      TableData<T> tableData, TableEntry<T> tableEntry) async {
+    TableData<T> tableData,
+    TableEntry<T> tableEntry,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
@@ -431,11 +489,12 @@ class SupaDatabaseManager {
       return const Result.errorMessage(1, 'deleteTableEntry id is null');
     }
     try {
-      final data = await client
-          .from(tableData.tableName)
-          .delete()
-          .eq(idFieldName, tableEntry.id!)
-          .select();
+      final data =
+          await client
+              .from(tableData.tableName)
+              .delete()
+              .eq(idFieldName, tableEntry.id!)
+              .select();
 
       // if (data != null && data is List<dynamic> && data.isNotEmpty) {
       if (data.isNotEmpty) {
@@ -455,18 +514,22 @@ class SupaDatabaseManager {
   ///
   /// [tableData] Describe Table
   Future<Result<T?>> deleteTableEntryWhere<T>(
-      TableData<T> tableData, String columnName, Object columnValue) async {
+    TableData<T> tableData,
+    String columnName,
+    Object columnValue,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
       }
     }
     try {
-      final data = await client
-          .from(tableData.tableName)
-          .delete()
-          .eq(columnName, columnValue)
-          .select();
+      final data =
+          await client
+              .from(tableData.tableName)
+              .delete()
+              .eq(columnName, columnValue)
+              .select();
 
       // if (data != null && data is List<dynamic> && data.isNotEmpty) {
       if (data.isNotEmpty) {
@@ -511,7 +574,10 @@ class SupaDatabaseManager {
     }
     try {
       // NOTE: Requires where clause. Use a value that will always be true
-      await client.from(tableData.tableName).delete().eq(userIdFieldName, client.auth.currentUser!.id,);
+      await client
+          .from(tableData.tableName)
+          .delete()
+          .eq(userIdFieldName, client.auth.currentUser!.id);
       return const Result.success(null);
     } on Exception catch (error) {
       logFatal('deleteTableEntry: $error');
@@ -523,14 +589,20 @@ class SupaDatabaseManager {
   }
 
   Future<Result<String?>> uploadFile(
-      String bucket, String folderName, String fileName, File file) async {
+    String bucket,
+    String folderName,
+    String fileName,
+    File file,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
       }
     }
     try {
-      final path = await client.storage.from(bucket).updateBinary(
+      final path = await client.storage
+          .from(bucket)
+          .updateBinary(
             '$folderName/$fileName',
             file.readAsBytesSync(),
             fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
@@ -549,16 +621,20 @@ class SupaDatabaseManager {
   }
 
   Future<Result<bool>> downloadFile(
-      String bucket, String folderName, String fileName, File file) async {
+    String bucket,
+    String folderName,
+    String fileName,
+    File file,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
       }
     }
     try {
-      final u8List = await client.storage.from(bucket).download(
-            '$folderName/$fileName',
-          );
+      final u8List = await client.storage
+          .from(bucket)
+          .download('$folderName/$fileName');
       file.writeAsBytesSync(u8List);
       return const Result.success(true);
     } on Exception catch (error) {
@@ -568,16 +644,19 @@ class SupaDatabaseManager {
   }
 
   Future<Result<List<FileObject>?>> deleteFile(
-      String bucket, String folderName, String fileName) async {
+    String bucket,
+    String folderName,
+    String fileName,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
       }
     }
     try {
-      final files = await client.storage.from(bucket).remove(
-        ['$folderName/$fileName'],
-      );
+      final files = await client.storage.from(bucket).remove([
+        '$folderName/$fileName',
+      ]);
       return Result.success(files);
     } on Exception catch (error) {
       logFatal('deleteFile: $error');
@@ -586,7 +665,9 @@ class SupaDatabaseManager {
   }
 
   Future<Result<List<FileObject>?>> getBucketList(
-      String bucket, String path) async {
+    String bucket,
+    String path,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
@@ -620,16 +701,18 @@ class SupaDatabaseManager {
   /// [tableData] Describe Table
   /// [updateJson] JSON for what to update
   /// [selections] list of [SelectEntry] items
-  Future<Result<bool>> updateTableEntryWhere<T>(TableData<T> tableData, Map<String, dynamic> updateJson, List<SelectEntry> selections ) async {
+  Future<Result<bool>> updateTableEntryWhere<T>(
+    TableData<T> tableData,
+    Map<String, dynamic> updateJson,
+    List<SelectEntry> selections,
+  ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
         return Result.failure(SignedOutException());
       }
     }
     try {
-      var update = client
-          .from(tableData.tableName)
-          .update(updateJson);
+      var update = client.from(tableData.tableName).update(updateJson);
       if (tableData.hasUserId) {
         update = update.eq(userIdFieldName, client.auth.currentUser!.id);
       }

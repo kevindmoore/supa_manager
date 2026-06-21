@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,6 +13,14 @@ const String loggedInKey = 'LoggedIn';
 const String userKey = 'user';
 const String sessionKey = 'sessionKey';
 
+class AuthListener {
+  final Function(AuthState event) onData;
+  final Function? onError;
+  final void Function()? onDone;
+
+  AuthListener({required this.onData, this.onError, this.onDone});
+}
+
 /// Class for handling Supabase Authorization
 ///
 /// [apiKey] are required to use this class
@@ -24,13 +33,23 @@ class SupaAuthManager {
   SupabaseClient client;
   final SharedPreferences prefs;
   final LoginStateNotifier? loginStateNotifier;
+  StreamSubscription<AuthState>? _authSubscription;
+  final _loggedInStateController = StreamController<bool>.broadcast();
 
-  SupaAuthManager(
-      {required this.client,
-      required this.prefs,
-      required this.apiKey,
-      required this.loginStateNotifier,
-      this.emailRedirectUrl});
+  /// A stream that emits `true` when the user is logged in and `false` otherwise.
+  /// This is the stream that the rest of the app should listen to.
+  Stream<bool> get onLoginStateChange => _loggedInStateController.stream;
+
+  SupaAuthManager({
+    required this.client,
+    required this.prefs,
+    required this.apiKey,
+    required this.loginStateNotifier,
+    this.emailRedirectUrl,
+  }) {
+    // Initially we are not logged in
+    _loggedInStateController.add(false);
+  }
 
   /// When an app starts, call this to load any already logged in user
   Future<DatabaseUser?> loadUser() async {
@@ -52,9 +71,11 @@ class SupaAuthManager {
         return user;
       } else {
         loginStateNotifier?.loggedIn(false);
+        _loggedInStateController.add(false);
         return null;
       }
     }
+    loginStateNotifier?.loggedIn(false);
     loginStateNotifier?.update(false, null);
     return null;
   }
@@ -107,23 +128,17 @@ class SupaAuthManager {
       case AuthChangeEvent.passwordRecovery:
         // TODO: Handle this case.
         break;
+      case AuthChangeEvent.signedOut:
+        _logoutState();
+        _loggedInStateController.add(false);
+        break;
       case AuthChangeEvent.signedIn:
+      case AuthChangeEvent.tokenRefreshed:
+      case AuthChangeEvent.userUpdated:
         loginStateNotifier?.loggedIn(true);
         if (state.session != null) {
           _saveUserSession(state.session!);
-        }
-        break;
-      case AuthChangeEvent.signedOut:
-        _logoutState();
-        break;
-      case AuthChangeEvent.tokenRefreshed:
-        if (state.session != null) {
-          _saveUserSession(state.session!);
-        }
-        break;
-      case AuthChangeEvent.userUpdated:
-        if (state.session != null) {
-          _saveUserSession(state.session!);
+          _loggedInStateController.add(true);
         }
         break;
       case AuthChangeEvent.mfaChallengeVerified:
@@ -132,6 +147,7 @@ class SupaAuthManager {
         break;
       // ignore: deprecated_member_use
       case AuthChangeEvent.userDeleted:
+        _loggedInStateController.add(false);
         break;
     }
   }
@@ -152,8 +168,11 @@ class SupaAuthManager {
   ///
   Future<Result<bool>> createUser(String email, String password) async {
     try {
-      final response =
-          await client.auth.signUp(email: email, password: password, emailRedirectTo: emailRedirectUrl);
+      final response = await client.auth.signUp(
+        email: email,
+        password: password,
+        emailRedirectTo: emailRedirectUrl,
+      );
       if (response.session != null) {
         _saveUserSession(response.session!);
         final user = DatabaseUser(email: email, password: password);
@@ -192,21 +211,28 @@ class SupaAuthManager {
   /// [password] password to use
   Future<Result<DatabaseUser>> login(String email, String password) async {
     try {
-      final response = await client.auth
-          .signInWithPassword(email: email, password: password);
+      final response = await client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
       if (response.session != null) {
         final user = DatabaseUser(
-            email: email, password: password, userId: response.user?.id);
+          email: email,
+          password: password,
+          userId: response.user?.id,
+        );
         _saveUserSession(response.session!);
         _saveUserData(user, true);
         // This needs to be after saving state
         loginStateNotifier?.update(true, user);
         logMessage('login: User exists, logged in');
         _registerAuthListener();
+        _loggedInStateController.add(true);
         return Result.success(user);
       }
     } catch (e) {
       logError(e);
+      _loggedInStateController.add(false);
       loginStateNotifier?.loggedIn(false);
       return Result.errorMessage(99, e.toString());
     }
@@ -214,19 +240,22 @@ class SupaAuthManager {
   }
 
   void _registerAuthListener() {
-    client.auth.onAuthStateChange.listen((state) {
+    if (_authSubscription != null) {
+     return;
+    }
+    _authSubscription = client.auth.onAuthStateChange.listen((state) {
       _authChanged(state);
     });
   }
 
   /// Logout the current user
   void logout() async {
-    _logoutState();
     try {
       await client.auth.signOut();
     } catch (e) {
       logError(e);
     }
+    _logoutState();
   }
 
   void _updateLogoutState() {
@@ -236,6 +265,7 @@ class SupaAuthManager {
   }
 
   void _logoutState() {
+    _loggedInStateController.add(false);
     prefs.setBool(loggedInKey, false);
     _clearUserSession();
     loginStateNotifier?.update(false, null);
@@ -249,7 +279,7 @@ class SupaAuthManager {
   String getPersistSessionString(Session session) {
     final data = {
       'currentSession': session.toJson(),
-      'expiresAt': session.expiresAt
+      'expiresAt': session.expiresAt,
     };
     return json.encode(data);
   }
@@ -266,9 +296,10 @@ class SupaAuthManager {
         final jsonStr = prefs.getString(sessionKey)!;
         final response = await client.auth.recoverSession(jsonStr);
         if (response.session != null && response.session?.isExpired == false) {
-          final builder = DatabaseUserBuilder()
-            ..email(response.user?.email)
-            ..userId(response.user?.id);
+          final builder =
+              DatabaseUserBuilder()
+                ..email(response.user?.email)
+                ..userId(response.user?.id);
           final user = builder.build();
           loginStateNotifier?.update(true, user);
           _saveUserSession(response.session!);
@@ -301,10 +332,7 @@ class SupaAuthManager {
   /// [email] email to reset
   void resetPassword(String email, [String? redirect]) async {
     try {
-      await client.auth.resetPasswordForEmail(
-        email,
-        redirectTo: redirect,
-      );
+      await client.auth.resetPasswordForEmail(email, redirectTo: redirect);
     } catch (error) {
       logFatal('Problems resetting password: $error');
     }
@@ -314,8 +342,9 @@ class SupaAuthManager {
   /// TODO: Not sure if this is working correctly
   Future<User?> updateUserPassword(String email, String password) async {
     try {
-      final response = await client.auth
-          .updateUser(UserAttributes(email: email, password: password));
+      final response = await client.auth.updateUser(
+        UserAttributes(email: email, password: password),
+      );
       return response.user;
     } catch (error) {
       logFatal('Problems resetting password: $error');
