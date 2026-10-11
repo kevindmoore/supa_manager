@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:http/http.dart' show ClientException;
 import 'package:lumberdash/lumberdash.dart';
 import 'package:supa_manager/src/auth/errors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,8 +26,33 @@ class SupaDatabaseManager {
   final SupabaseClient client;
   final SupaAuthManager? authManager;
 
+  /// Create a database manager for public, anonymous Data API access.
+  factory SupaDatabaseManager.anonymous(String url, String publishableKey) =>
+      SupaDatabaseManager(null, SupabaseClient(url, publishableKey));
+
   /// Initialize with AuthManager. Get an instance of the client
   SupaDatabaseManager(this.authManager, this.client);
+
+  Result<T> _authFailure<T>() {
+    return Result.failure(authManager?.authenticationFailure() ?? SignedOutException());
+  }
+
+  Result<T>? _temporaryDatabaseFailure<T>(Exception error) {
+    if (error is SocketException ||
+        error is ClientException && error.message.contains('SocketException')) {
+      logError(error);
+      return Result.failure(DatabaseTemporarilyUnavailableException(error));
+    }
+    return null;
+  }
+
+  void _logFailure(String message, Exception error) {
+    if (error is DatabaseTemporarilyUnavailableException) {
+      logError('$message $error');
+      return;
+    }
+    logFatal('$message $error');
+  }
 
   /// Given a table name and a list of json data, perform an insert
   ///
@@ -39,12 +65,14 @@ class SupaDatabaseManager {
     try {
       if (authManager?.isLoggedIn() == false) {
         if (!await authManager!.refreshSession()) {
-          return Result.failure(SignedOutException());
+          return _authFailure();
         }
       }
       final data = await client.from(tableName).insert(tableData).select();
       return Result.success(data);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<List<dynamic>>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('Error adding data $error');
       if (await _handlePostgrestError(error)) {
         return addListDataToTable(tableName, tableData);
@@ -64,12 +92,14 @@ class SupaDatabaseManager {
     try {
       if (authManager?.isLoggedIn() == false) {
         if (!await authManager!.refreshSession()) {
-          return Result.failure(SignedOutException());
+          return _authFailure();
         }
       }
       final data = await client.from(tableName).insert(tableMap).select();
       return Result.success(data);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<dynamic>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('Error adding data $error');
       if (await _handlePostgrestError(error)) {
         return addDataToTable(tableName, tableMap);
@@ -86,7 +116,7 @@ class SupaDatabaseManager {
     try {
       if (authManager?.isLoggedIn() == false) {
         if (!await authManager!.refreshSession()) {
-          return Result.failure(SignedOutException());
+          return _authFailure();
         }
       }
       var select = client
@@ -103,6 +133,8 @@ class SupaDatabaseManager {
       }
       return const Result.success(null);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<T?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('Error reading data $error');
       if (await _handlePostgrestError(error)) {
         return readEntry(tableData, id);
@@ -117,7 +149,7 @@ class SupaDatabaseManager {
   Future<Result<List<T>>> readEntries<T>(TableData<T> tableData) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     final entries = <T>[];
@@ -134,6 +166,8 @@ class SupaDatabaseManager {
       }
       return Result.success(entries);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<List<T>>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('Problems listing table readEntries Error: $error');
       if (await _handlePostgrestError(error)) {
         return readEntries(tableData);
@@ -196,13 +230,15 @@ class SupaDatabaseManager {
   Future<Result<List<dynamic>>> runFunction(String functionName) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
       final result = await client.rpc(functionName);
       return Result.success(result);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<List<dynamic>>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('buildSelect: Error  $error');
       if (await _handlePostgrestError(error)) {
         return runFunction(functionName);
@@ -224,7 +260,7 @@ class SupaDatabaseManager {
     final entries = <T>[];
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
@@ -245,6 +281,8 @@ class SupaDatabaseManager {
       }
       return Result.success(entries);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<List<T>>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('readEntriesWhere: Error  $error');
       if (await _handlePostgrestError(error)) {
         return readEntriesWhere(tableData, columnName, columnValue);
@@ -264,7 +302,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     final entries = <T>[];
@@ -286,6 +324,8 @@ class SupaDatabaseManager {
       }
       return Result.success(entries);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<List<T>>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('buildSelect: Error  $error');
       if (await _handlePostgrestError(error)) {
         return buildSelect(tableData, builder);
@@ -304,7 +344,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     final entries = <T>[];
@@ -332,6 +372,8 @@ class SupaDatabaseManager {
       }
       return Result.success(entries);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<List<T>>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('selectEntriesWhere: Error  $error');
       if (await _handlePostgrestError(error)) {
         return selectEntriesWhere(tableData, selections);
@@ -372,7 +414,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     final updatedEntry = tableEntry.addUserId(client.auth.currentUser!.id);
@@ -387,7 +429,7 @@ class SupaDatabaseManager {
         }
         return Result.success(null);
       case Failure(error: final error):
-        logFatal('addEntry: Error  $error');
+        _logFailure('addEntry: Error ', error);
         return Result.failure(error);
       case ErrorMessage(message: final message, code: final code):
         logFatal('addEntry: Error  $message');
@@ -405,7 +447,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     final jsonEntries = <Map<String, dynamic>>[];
@@ -425,7 +467,7 @@ class SupaDatabaseManager {
         }
         return Result.success(addedEntries);
       case Failure(error: final error):
-        logFatal('addEntry: Error  $error');
+        _logFailure('addEntry: Error ', error);
         return Result.failure(error);
       case ErrorMessage(message: final message, code: final code):
         logFatal('addEntry: Error  $message');
@@ -443,7 +485,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     if (tableEntry.id == null) {
@@ -463,6 +505,8 @@ class SupaDatabaseManager {
       }
       return const Result.success(null);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<T?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('updateTableEntry Error: $error');
       if (await _handlePostgrestError(error)) {
         return updateTableEntry(tableData, tableEntry);
@@ -481,7 +525,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     if (tableEntry.id == null) {
@@ -502,6 +546,8 @@ class SupaDatabaseManager {
       }
       return const Result.success(null);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<T?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('deleteTableEntry: $error');
       if (await _handlePostgrestError(error)) {
         return deleteTableEntry(tableData, tableEntry);
@@ -520,7 +566,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
@@ -537,6 +583,8 @@ class SupaDatabaseManager {
       }
       return const Result.success(null);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<T?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('deleteTableEntry: $error');
       if (await _handlePostgrestError(error)) {
         return deleteTableEntryWhere(tableData, columnName, columnValue);
@@ -549,7 +597,7 @@ class SupaDatabaseManager {
   Future<Result<T?>> deleteAll<T>(TableData<T> tableData) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
@@ -557,6 +605,8 @@ class SupaDatabaseManager {
       await client.from(tableData.tableName).delete().neq(idFieldName, -1);
       return const Result.success(null);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<T?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('deleteTableEntry: $error');
       if (await _handlePostgrestError(error)) {
         return deleteAll(tableData);
@@ -569,7 +619,7 @@ class SupaDatabaseManager {
   Future<Result<T?>> deleteAllEntries<T>(TableData<T> tableData) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
@@ -580,6 +630,8 @@ class SupaDatabaseManager {
           .eq(userIdFieldName, client.auth.currentUser!.id);
       return const Result.success(null);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<T?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('deleteTableEntry: $error');
       if (await _handlePostgrestError(error)) {
         return deleteAll(tableData);
@@ -596,7 +648,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
@@ -615,6 +667,8 @@ class SupaDatabaseManager {
       // );
       return Result.success(path);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<String?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('uploadFile: $error');
       return Result.failure(error);
     }
@@ -628,7 +682,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
@@ -638,6 +692,8 @@ class SupaDatabaseManager {
       file.writeAsBytesSync(u8List);
       return const Result.success(true);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<bool>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('downloadFile: $error');
       return Result.failure(error);
     }
@@ -650,7 +706,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
@@ -659,6 +715,8 @@ class SupaDatabaseManager {
       ]);
       return Result.success(files);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<List<FileObject>?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('deleteFile: $error');
       return Result.failure(error);
     }
@@ -670,13 +728,15 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
       final files = await client.storage.from(bucket).list(path: path);
       return Result.success(files);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<List<FileObject>?>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('getBucketList: $error');
       return Result.failure(error);
     }
@@ -708,7 +768,7 @@ class SupaDatabaseManager {
   ) async {
     if (authManager?.isLoggedIn() == false) {
       if (!await authManager!.refreshSession()) {
-        return Result.failure(SignedOutException());
+        return _authFailure();
       }
     }
     try {
@@ -728,6 +788,8 @@ class SupaDatabaseManager {
       await update;
       return const Result.success(true);
     } on Exception catch (error) {
+      final temporaryFailure = _temporaryDatabaseFailure<bool>(error);
+      if (temporaryFailure != null) return temporaryFailure;
       logFatal('updateTableEntryWhere Error: $error');
       if (await _handlePostgrestError(error)) {
         return updateTableEntryWhere(tableData, updateJson, selections);

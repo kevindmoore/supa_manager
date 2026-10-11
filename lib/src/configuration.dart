@@ -30,9 +30,9 @@ class Configuration {
 
   Future initialize(
     String url,
-    String apiKey,
+    String apiKey, [
     String? emailRedirectUrl,
-  ) async {
+  ]) async {
     try {
       supabaseInstance = await Supabase.initialize(
         url: url,
@@ -47,6 +47,7 @@ class Configuration {
       client: supabaseInstance.client,
       prefs: globalSharedPreferences,
       apiKey: apiKey,
+      emailRedirectUrl: emailRedirectUrl,
       loginStateNotifier: loginStateNotifier,
     );
     supaDatabaseRepository = SupaDatabaseManager(

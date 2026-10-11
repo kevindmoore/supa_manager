@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lumberdash/lumberdash.dart';
 
 import 'database_user.dart';
+import 'errors.dart';
 import 'login_state.dart';
 import 'result.dart';
 
@@ -35,10 +37,17 @@ class SupaAuthManager {
   final LoginStateNotifier? loginStateNotifier;
   StreamSubscription<AuthState>? _authSubscription;
   final _loggedInStateController = StreamController<bool>.broadcast();
+  AuthTemporarilyUnavailableException? _temporaryAuthException;
 
   /// A stream that emits `true` when the user is logged in and `false` otherwise.
   /// This is the stream that the rest of the app should listen to.
   Stream<bool> get onLoginStateChange => _loggedInStateController.stream;
+
+  bool get isAuthTemporarilyUnavailable => _temporaryAuthException != null;
+
+  Exception authenticationFailure() {
+    return _temporaryAuthException ?? SignedOutException();
+  }
 
   SupaAuthManager({
     required this.client,
@@ -135,6 +144,7 @@ class SupaAuthManager {
       case AuthChangeEvent.signedIn:
       case AuthChangeEvent.tokenRefreshed:
       case AuthChangeEvent.userUpdated:
+        _temporaryAuthException = null;
         loginStateNotifier?.loggedIn(true);
         if (state.session != null) {
           _saveUserSession(state.session!);
@@ -189,7 +199,7 @@ class SupaAuthManager {
       }
     } on Exception catch (error) {
       logError(error);
-      return Result.failure(error);
+      return Result.failure(_authOperationFailure(error));
     }
     return const Result.success(false);
   }
@@ -230,13 +240,50 @@ class SupaAuthManager {
         _loggedInStateController.add(true);
         return Result.success(user);
       }
-    } catch (e) {
-      logError(e);
+    } on Exception catch (error) {
+      logError(error);
       _loggedInStateController.add(false);
       loginStateNotifier?.loggedIn(false);
-      return Result.errorMessage(99, e.toString());
+      return Result.failure(_authOperationFailure(error));
     }
     return const Result.errorMessage(99, 'Problems logging in');
+  }
+
+  /// Login with a third-party OAuth provider.
+  ///
+  /// [nativeRedirectUrl] is used for native app callbacks. On web, Supabase
+  /// needs an HTTP(S) callback URL, so this defaults to the current page URL.
+  Future<bool> loginWithOAuth(
+    OAuthProvider provider, {
+    String? nativeRedirectUrl,
+    String? webRedirectUrl,
+    String? scopes,
+    LaunchMode authScreenLaunchMode = LaunchMode.externalApplication,
+    Map<String, String>? queryParams,
+  }) async {
+    final redirectTo = kIsWeb ? webRedirectUrl ?? _currentWebRedirectUrl() : nativeRedirectUrl;
+    if (kIsWeb && redirectTo == null) {
+      throw ArgumentError('Web OAuth requires an HTTP(S) redirect URL.');
+    }
+    final launched = await client.auth.signInWithOAuth(
+      provider,
+      redirectTo: redirectTo,
+      scopes: scopes,
+      authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : authScreenLaunchMode,
+      queryParams: queryParams,
+    );
+    if (launched) {
+      _registerAuthListener();
+    }
+    return launched;
+  }
+
+  String? _currentWebRedirectUrl() {
+    final uri = Uri.base;
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      return null;
+    }
+    return '${uri.scheme}://${uri.authority}/';
   }
 
   void _registerAuthListener() {
@@ -266,6 +313,7 @@ class SupaAuthManager {
   }
 
   void _logoutState() {
+    _temporaryAuthException = null;
     _loggedInStateController.add(false);
     prefs.setBool(loggedInKey, false);
     _clearUserSession();
@@ -308,6 +356,15 @@ class SupaAuthManager {
           return true;
         }
       } catch (error) {
+        if (_isMissingSessionError(error)) {
+          logError('Problems recovering session $error');
+          _logoutState();
+          return false;
+        }
+        if (_handleTemporaryAuthFailure(error)) {
+          logWarning('Auth temporarily unavailable while recovering session: $error');
+          return false;
+        }
         logError('Problems recovering session $error');
       }
     }
@@ -319,23 +376,50 @@ class SupaAuthManager {
     try {
       final response = await client.auth.refreshSession();
       if (response.session != null) {
+        _temporaryAuthException = null;
         _saveUserSession(response.session!);
       }
       return true;
     } catch (e) {
-      logFatal('Problems refreshing session: $e');
+      if (_handleTemporaryAuthFailure(e)) {
+        logWarning('Auth temporarily unavailable while refreshing session: $e');
+      } else {
+        _logoutState();
+        logFatal('Problems refreshing session: $e');
+      }
     }
     return false;
   }
 
+  bool _handleTemporaryAuthFailure(Object error) {
+    if (error is! AuthRetryableFetchException) return false;
+    _temporaryAuthException = AuthTemporarilyUnavailableException(error);
+    return true;
+  }
+
+  Exception _authOperationFailure(Exception error) {
+    if (error is AuthRetryableFetchException) {
+      return AuthTemporarilyUnavailableException(error);
+    }
+    return error;
+  }
+
+  bool _isMissingSessionError(Object error) {
+    return error is AuthException && error.code == 'session_missing';
+  }
+
   /// Reset the password for the given email
-  /// TODO: Not sure if this is working correctly
   /// [email] email to reset
-  void resetPassword(String email, [String? redirect]) async {
+  Future<Result<bool>> resetPassword(String email, [String? redirect]) async {
     try {
-      await client.auth.resetPasswordForEmail(email, redirectTo: redirect);
-    } catch (error) {
+      await client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: redirect ?? emailRedirectUrl,
+      );
+      return const Result.success(true);
+    } on Exception catch (error) {
       logFatal('Problems resetting password: $error');
+      return Result.failure(_authOperationFailure(error));
     }
   }
 
